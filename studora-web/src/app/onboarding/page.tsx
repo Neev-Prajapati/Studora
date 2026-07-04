@@ -27,7 +27,7 @@ export default function Onboarding() {
       if (!res.ok) {
         setError(data.error || "Failed to claim username");
       } else {
-        router.push("/");
+        router.push("/dashboard");
         router.refresh();
       }
     } catch (err) {

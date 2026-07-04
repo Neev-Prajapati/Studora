@@ -1,7 +1,7 @@
 "use client";
 
-import { Bell, Search, User } from "lucide-react";
-import { useSession } from "@/lib/auth-client";
+import { Bell, Search, User, LogOut } from "lucide-react";
+import { useSession, signOut } from "@/lib/auth-client";
 
 export default function TopNav() {
   const { data: session } = useSession();
@@ -36,6 +36,16 @@ export default function TopNav() {
           )}
           {session?.user?.name && <span className="text-sm font-medium hidden sm:block">{(session.user as any).username ? `@${(session.user as any).username}` : session.user.name.split(" ")[0]}</span>}
         </div>
+        <button 
+          onClick={async () => {
+            await signOut();
+            window.location.href = "/login";
+          }}
+          className="p-1.5 ml-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+          title="Sign Out"
+        >
+          <LogOut className="h-5 w-5" />
+        </button>
       </div>
     </header>
   );

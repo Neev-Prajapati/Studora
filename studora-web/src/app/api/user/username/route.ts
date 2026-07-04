@@ -20,6 +20,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid username" }, { status: 400 });
     }
 
+    // Check if user already claimed a username
+    const currentUser = await db.select().from(user).where(eq(user.id, session.user.id));
+    if (currentUser.length > 0 && currentUser[0].username) {
+      return NextResponse.json({ error: "You have already claimed a username" }, { status: 400 });
+    }
+
     // Check if username is taken
     const existingUser = await db.select().from(user).where(eq(user.username, username));
 
