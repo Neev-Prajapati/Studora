@@ -1,19 +1,56 @@
 "use client";
 
-import { Folder, Clock, FileText, ChevronRight, MoreHorizontal, Activity } from "lucide-react";
-import { useState } from "react";
+import { Folder, Clock, FileText, ChevronRight, MoreHorizontal, Activity, Plus } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "@/lib/auth-client";
+import { getUserRooms } from "@/actions/room";
+import RoomModals from "@/components/RoomModals";
+import Link from "next/link";
 
 export default function Dashboard() {
   const { data: session } = useSession();
 
-  // Data will be fetched from Supabase in the future
-  const [subjects, setSubjects] = useState<any[]>([]);
+  const [rooms, setRooms] = useState<any[]>([]);
   const [deadlines, setDeadlines] = useState<any[]>([]);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Modal State
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalType, setModalType] = useState<"create" | "join" | null>(null);
+
+  const fetchRooms = useCallback(async () => {
+    setIsLoading(true);
+    const res = await getUserRooms();
+    if (res.success && res.rooms) {
+      setRooms(res.rooms);
+    }
+    setIsLoading(false);
+  }, []);
+
+  useEffect(() => {
+    fetchRooms();
+  }, [fetchRooms]);
+
+  const openModal = (type: "create" | "join") => {
+    setModalType(type);
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setTimeout(() => setModalType(null), 200);
+  };
 
   return (
-    <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-8">
+    <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-8 relative">
+      <RoomModals 
+        isOpen={modalOpen} 
+        type={modalType} 
+        onClose={closeModal} 
+        onSuccess={fetchRooms} 
+      />
+
       {/* Welcome Banner */}
       <div className="flex items-center justify-between">
         <div>
@@ -31,65 +68,78 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* Left Column (Subjects & Activity) */}
+        {/* Left Column (Rooms & Activity) */}
         <div className="lg:col-span-2 space-y-8">
           
-          {/* Enrolled Subjects */}
+          {/* Study Rooms */}
           <section>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
                 <Folder className="h-5 w-5 text-primary" />
-                Enrolled Subjects
+                Your Study Rooms
               </h2>
-              {subjects.length > 0 && (
-                <a href="#" className="text-sm font-medium text-primary hover:text-primary/80 flex items-center">
-                  View all <ChevronRight className="h-4 w-4 ml-1" />
-                </a>
-              )}
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => openModal('join')}
+                  className="text-sm font-medium text-foreground hover:bg-muted px-3 py-1.5 rounded-md transition-colors"
+                >
+                  Join Room
+                </button>
+                <button 
+                  onClick={() => openModal('create')}
+                  className="text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 px-3 py-1.5 rounded-md transition-colors flex items-center"
+                >
+                  <Plus className="h-4 w-4 mr-1" /> Create
+                </button>
+              </div>
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {subjects.length === 0 ? (
+              {isLoading ? (
+                 <div className="sm:col-span-2 p-8 text-center text-muted-foreground">Loading rooms...</div>
+              ) : rooms.length === 0 ? (
                 <div className="sm:col-span-2 rounded-xl border border-dashed border-border bg-transparent p-8 flex flex-col items-center justify-center text-center">
                   <Folder className="h-8 w-8 text-muted-foreground mb-3" />
-                  <p className="text-muted-foreground font-medium mb-1">No subjects yet</p>
-                  <p className="text-sm text-muted-foreground mb-4">You haven't enrolled in any subjects.</p>
-                  <button className="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md text-sm font-medium transition-all shadow-sm">
-                    Join a Subject
-                  </button>
+                  <p className="text-foreground font-medium mb-1">No rooms yet</p>
+                  <p className="text-sm text-muted-foreground mb-4">Create or join a room to start collaborating.</p>
+                  <div className="flex gap-3">
+                    <button onClick={() => openModal('create')} className="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md text-sm font-medium transition-all shadow-sm">
+                      Create Room
+                    </button>
+                    <button onClick={() => openModal('join')} className="bg-muted text-foreground hover:bg-muted/80 px-4 py-2 rounded-md text-sm font-medium transition-all shadow-sm">
+                      Join via Code
+                    </button>
+                  </div>
                 </div>
               ) : (
-                subjects.map((subject) => (
-                  <div key={subject.id} className="group relative rounded-xl border border-border bg-card p-5 hover:border-primary/50 hover:shadow-md transition-all cursor-pointer">
+                rooms.map((room) => (
+                  <div key={room.id} className="group relative rounded-xl border border-border bg-card p-5 hover:border-primary/50 hover:shadow-md transition-all cursor-pointer">
                     <div className="flex justify-between items-start mb-4">
                       <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
                         <Folder className="h-5 w-5" />
                       </div>
-                      <button className="text-muted-foreground hover:text-foreground">
-                        <MoreHorizontal className="h-5 w-5" />
-                      </button>
+                      <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-sm ${
+                        room.role === 'owner' ? 'bg-primary/20 text-primary' : 
+                        room.role === 'editor' ? 'bg-orange-500/20 text-orange-500' : 
+                        'bg-muted text-muted-foreground'
+                      }`}>
+                        {room.role}
+                      </span>
                     </div>
-                    <h3 className="font-semibold text-card-foreground line-clamp-1">{subject.name}</h3>
-                    <div className="mt-2 flex items-center justify-between text-sm text-muted-foreground">
-                      <span>{subject.members} members</span>
-                      {subject.unread > 0 && (
-                        <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                          {subject.unread} new
+                    <h3 className="font-semibold text-card-foreground line-clamp-1">{room.name}</h3>
+                    {room.description && <p className="text-xs text-muted-foreground line-clamp-1 mt-1">{room.description}</p>}
+                    <div className="mt-3 flex items-center justify-between text-sm text-muted-foreground border-t border-border pt-3">
+                      <div className="flex items-center">
+                        <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded text-foreground mr-2" title="Invite Code">
+                          {room.inviteCode}
                         </span>
-                      )}
+                      </div>
+                      <Link href={`/rooms/${room.id}`} className="text-primary text-xs font-medium hover:underline">
+                        Open Room
+                      </Link>
                     </div>
                   </div>
                 ))
-              )}
-              
-              {/* Add New Subject Card (Only show alongside existing subjects) */}
-              {subjects.length > 0 && (
-                <div className="rounded-xl border border-dashed border-border bg-transparent p-5 flex flex-col items-center justify-center text-muted-foreground hover:text-foreground hover:border-muted-foreground transition-all cursor-pointer min-h-[140px]">
-                  <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center mb-2">
-                    <span className="text-lg font-medium">+</span>
-                  </div>
-                  <span className="font-medium text-sm">Join Subject</span>
-                </div>
               )}
             </div>
           </section>

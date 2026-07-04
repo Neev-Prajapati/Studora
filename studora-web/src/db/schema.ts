@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, primaryKey, pgEnum } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
 					id: text("id").primaryKey(),
@@ -45,4 +45,35 @@ export const verification = pgTable("verification", {
 					expiresAt: timestamp("expires_at").notNull(),
 					createdAt: timestamp("created_at"),
 					updatedAt: timestamp("updated_at")
+});
+
+export const roleEnum = pgEnum('role', ['owner', 'editor', 'viewer']);
+
+export const room = pgTable("room", {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    name: text("name").notNull(),
+    description: text("description"),
+    inviteCode: text("invite_code").notNull().unique(),
+    ownerId: text("owner_id").notNull().references(() => user.id),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const roomMember = pgTable("room_member", {
+    roomId: text("room_id").notNull().references(() => room.id, { onDelete: 'cascade' }),
+    userId: text("user_id").notNull().references(() => user.id, { onDelete: 'cascade' }),
+    role: roleEnum("role").notNull().default('viewer'),
+    joinedAt: timestamp("joined_at").defaultNow().notNull(),
+}, (table) => {
+    return {
+        pk: primaryKey({ columns: [table.roomId, table.userId] })
+    };
+});
+
+export const file = pgTable("file", {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    name: text("name").notNull(),
+    url: text("url").notNull(),
+    roomId: text("room_id").notNull().references(() => room.id, { onDelete: 'cascade' }),
+    uploadedBy: text("uploaded_by").notNull().references(() => user.id),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
 });
