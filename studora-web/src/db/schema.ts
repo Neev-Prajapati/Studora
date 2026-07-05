@@ -77,3 +77,13 @@ export const file = pgTable("file", {
     uploadedBy: text("uploaded_by").notNull().references(() => user.id),
     createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+export const activityLog = pgTable("activity_log", {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    roomId: text("room_id").notNull().references(() => room.id, { onDelete: 'cascade' }),
+    roomName: text("room_name").notNull(),
+    userId: text("user_id").notNull().references(() => user.id, { onDelete: 'cascade' }),
+    action: text("action").notNull(),
+    target: text("target"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+});

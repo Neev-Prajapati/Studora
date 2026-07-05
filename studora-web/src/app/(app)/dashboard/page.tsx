@@ -3,7 +3,7 @@
 import { Folder, Clock, FileText, ChevronRight, MoreHorizontal, Activity, Plus } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "@/lib/auth-client";
-import { getUserRooms } from "@/actions/room";
+import { getUserRooms, getRecentActivity } from "@/actions/room";
 import RoomModals from "@/components/RoomModals";
 import Link from "next/link";
 
@@ -25,6 +25,22 @@ export default function Dashboard() {
     if (res.success && res.rooms) {
       setRooms(res.rooms);
     }
+    
+    const actRes = await getRecentActivity();
+    if (actRes.success && actRes.activities) {
+      const formattedActivities = actRes.activities.map((a: any) => ({
+        id: a.id,
+        user: a.username ? `@${a.username}` : (a.user ? a.user.split(" ")[0] : "User"),
+        action: a.action,
+        target: a.target || "",
+        time: new Date(a.createdAt).toLocaleString(undefined, {
+          month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+        }),
+        subject: a.roomName,
+      }));
+      setRecentActivity(formattedActivities);
+    }
+    
     setIsLoading(false);
   }, []);
 

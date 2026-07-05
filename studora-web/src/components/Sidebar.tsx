@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, FolderClosed, CheckSquare, Settings, BookOpen } from "lucide-react";
+import { Home, CheckSquare, Settings, BookOpen } from "lucide-react";
 
 export default function Sidebar() {
   return (
@@ -14,10 +14,6 @@ export default function Sidebar() {
         <a href="#" className="flex items-center px-3 py-2 text-sm font-medium rounded-md bg-sidebar-accent text-sidebar-accent-foreground">
           <Home className="h-5 w-5 mr-3" />
           Dashboard
-        </a>
-        <a href="#" className="flex items-center px-3 py-2 text-sm font-medium rounded-md text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground transition-colors">
-          <FolderClosed className="h-5 w-5 mr-3 text-muted-foreground" />
-          Subjects
         </a>
         <a href="#" className="flex items-center px-3 py-2 text-sm font-medium rounded-md text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground transition-colors">
           <CheckSquare className="h-5 w-5 mr-3 text-muted-foreground" />

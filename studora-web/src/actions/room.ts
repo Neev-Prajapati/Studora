@@ -2,7 +2,7 @@
 
 import { db } from "@/db";
 import { room, roomMember } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray, desc } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
@@ -15,6 +15,24 @@ function generateInviteCode() {
     code += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return code;
+}
+
+export async function logActivity(roomId: string, userId: string, action: string, target?: string) {
+  try {
+    const roomInfo = await db.select({ name: room.name }).from(room).where(eq(room.id, roomId));
+    const roomName = roomInfo.length > 0 ? roomInfo[0].name : "Unknown Room";
+    
+    const { activityLog } = await import("@/db/schema");
+    await db.insert(activityLog).values({
+      roomId,
+      roomName,
+      userId,
+      action,
+      target,
+    });
+  } catch (error) {
+    console.error("Failed to log activity:", error);
+  }
 }
 
 export async function createRoom(name: string, description?: string) {
@@ -68,6 +86,8 @@ export async function createRoom(name: string, description?: string) {
       role: 'owner',
     });
 
+    await logActivity(roomId, session.user.id, "created the room");
+
     revalidatePath("/dashboard");
     return { success: true, roomId, inviteCode };
 
@@ -120,6 +140,8 @@ export async function joinRoom(inviteCode: string) {
       userId: session.user.id,
       role: 'viewer',
     });
+
+    await logActivity(roomId, session.user.id, "joined the room");
 
     revalidatePath("/dashboard");
     return { success: true, roomId };
@@ -267,6 +289,8 @@ export async function saveFileRecord(roomId: string, fileName: string, fileUrl: 
       uploadedBy: session.user.id,
     });
 
+    await logActivity(roomId, session.user.id, "uploaded file", fileName);
+
     revalidatePath(`/rooms/${roomId}`);
     return { success: true };
   } catch (error) {
@@ -295,6 +319,7 @@ export async function deleteFileAction(roomId: string, fileId: string) {
     
     if (role === "owner" || (role === "editor" && fileRecord[0].uploadedBy === session.user.id)) {
       await db.delete(file).where(eq(file.id, fileId));
+      await logActivity(roomId, session.user.id, "deleted file", fileRecord[0].name);
       revalidatePath(`/rooms/${roomId}`);
       return { success: true };
     }
@@ -327,6 +352,12 @@ export async function updateMemberRole(roomId: string, targetUserId: string, new
       .set({ role: newRole })
       .where(and(eq(roomMember.roomId, roomId), eq(roomMember.userId, targetUserId)));
 
+    const { user } = await import("@/db/schema");
+    const targetInfo = await db.select({ name: user.name }).from(user).where(eq(user.id, targetUserId));
+    const tName = targetInfo.length > 0 ? targetInfo[0].name : "a member";
+
+    await logActivity(roomId, session.user.id, `changed role to ${newRole} for`, tName);
+
     revalidatePath(`/rooms/${roomId}`);
     return { success: true };
   } catch (error) {
@@ -355,6 +386,12 @@ export async function removeMember(roomId: string, targetUserId: string) {
     await db.delete(roomMember)
       .where(and(eq(roomMember.roomId, roomId), eq(roomMember.userId, targetUserId)));
 
+    const { user } = await import("@/db/schema");
+    const targetInfo = await db.select({ name: user.name }).from(user).where(eq(user.id, targetUserId));
+    const tName = targetInfo.length > 0 ? targetInfo[0].name : "a member";
+
+    await logActivity(roomId, session.user.id, "removed member", tName);
+
     revalidatePath(`/rooms/${roomId}`);
     return { success: true };
   } catch (error) {
@@ -379,6 +416,7 @@ export async function renameRoomAction(roomId: string, newName: string) {
     if (!newName || newName.trim() === "") return { error: "Name cannot be empty" };
 
     await db.update(room).set({ name: newName }).where(eq(room.id, roomId));
+    await logActivity(roomId, session.user.id, "renamed room to", newName);
     revalidatePath(`/rooms/${roomId}`);
     return { success: true };
   } catch (error) {
@@ -417,6 +455,12 @@ export async function transferOwnership(roomId: string, targetUserId: string) {
     // Update the room's ownerId
     await db.update(room).set({ ownerId: targetUserId }).where(eq(room.id, roomId));
 
+    const { user } = await import("@/db/schema");
+    const targetInfo = await db.select({ name: user.name }).from(user).where(eq(user.id, targetUserId));
+    const tName = targetInfo.length > 0 ? targetInfo[0].name : "a member";
+
+    await logActivity(roomId, session.user.id, "transferred ownership to", tName);
+
     revalidatePath(`/rooms/${roomId}`);
     return { success: true };
   } catch (error) {
@@ -440,10 +484,47 @@ export async function deleteRoomAction(roomId: string) {
 
     await db.delete(room).where(eq(room.id, roomId)); // Cascades to members and files
 
+    await logActivity(roomId, session.user.id, "deleted the room");
+
     revalidatePath(`/dashboard`);
     return { success: true };
   } catch (error) {
     console.error("Delete room failed:", error);
     return { error: "Internal Server Error" };
+  }
+}
+
+export async function getRecentActivity() {
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session || !session.user) return { error: "Unauthorized", activities: [] };
+
+    const { activityLog, user } = await import("@/db/schema");
+
+    // Get user's rooms
+    const userRooms = await db.select({ roomId: roomMember.roomId }).from(roomMember).where(eq(roomMember.userId, session.user.id));
+    const roomIds = userRooms.map(r => r.roomId);
+
+    if (roomIds.length === 0) return { success: true, activities: [] };
+
+    const logs = await db.select({
+      id: activityLog.id,
+      user: user.name,
+      username: user.username,
+      action: activityLog.action,
+      target: activityLog.target,
+      roomName: activityLog.roomName,
+      createdAt: activityLog.createdAt,
+    })
+    .from(activityLog)
+    .innerJoin(user, eq(activityLog.userId, user.id))
+    .where(inArray(activityLog.roomId, roomIds))
+    .orderBy(desc(activityLog.createdAt))
+    .limit(30);
+
+    return { success: true, activities: logs };
+  } catch (error) {
+    console.error("Failed to fetch activity:", error);
+    return { error: "Internal Server Error", activities: [] };
   }
 }
