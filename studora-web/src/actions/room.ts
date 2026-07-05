@@ -320,6 +320,20 @@ export async function deleteFileAction(roomId: string, fileId: string) {
     if (role === "owner" || (role === "editor" && fileRecord[0].uploadedBy === session.user.id)) {
       await db.delete(file).where(eq(file.id, fileId));
       await logActivity(roomId, session.user.id, "deleted file", fileRecord[0].name);
+
+      const { s3Client } = await import("@/lib/s3");
+      const { DeleteObjectCommand } = await import("@aws-sdk/client-s3");
+      
+      const bucket = process.env.S3_BUCKET_NAME!;
+      const urlParts = fileRecord[0].url.split(`/${bucket}/`);
+      if (urlParts.length > 1) {
+        const s3Key = urlParts[1];
+        await s3Client.send(new DeleteObjectCommand({
+          Bucket: bucket,
+          Key: s3Key
+        })).catch(console.error);
+      }
+
       revalidatePath(`/rooms/${roomId}`);
       return { success: true };
     }
