@@ -5,4 +5,4 @@ export const authClient = createAuthClient({
 })
 
 // @ts-ignore
-export const { signIn, signUp, signOut, useSession, forgetPassword, resetPassword, requestPasswordReset } = authClient;
+export const { signIn, signUp, signOut, useSession, forgetPassword, resetPassword, requestPasswordReset, verifyEmail, sendVerificationEmail } = authClient;

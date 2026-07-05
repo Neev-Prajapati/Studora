@@ -10,6 +10,7 @@ export default function SignUp() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -31,6 +32,7 @@ export default function SignUp() {
     e.preventDefault();
     setLoading(true);
     setError("");
+    setSuccessMessage("");
 
     if (!name || !email || !password || !confirmPassword) {
       setError("Please fill in all fields");
@@ -55,8 +57,13 @@ export default function SignUp() {
       if (error) {
         setError(error.message || "Failed to sign up");
       } else {
-        // Successful signup, Next.js middleware will handle routing to /onboarding or /dashboard
-        router.push("/dashboard");
+        // Successful signup, but email verification is required
+        setSuccessMessage("Account created! Please check your email for a verification link before logging in.");
+        // Clear fields
+        setEmail("");
+        setPassword("");
+        setConfirmPassword("");
+        setName("");
       }
     } catch (err: any) {
       setError("An unexpected error occurred");
@@ -83,6 +90,12 @@ export default function SignUp() {
           {error && (
             <div className="mb-4 p-3 rounded bg-destructive/15 text-destructive text-sm font-medium text-center">
               {error}
+            </div>
+          )}
+
+          {successMessage && (
+            <div className="mb-4 p-3 rounded bg-green-500/15 text-green-600 text-sm font-medium text-center border border-green-500/30">
+              {successMessage}
             </div>
           )}
 
