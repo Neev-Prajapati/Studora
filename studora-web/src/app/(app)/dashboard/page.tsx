@@ -10,15 +10,22 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { usePreferences } from "@/components/PreferencesProvider";
 
+// Global in-memory cache for instant navigation (stale-while-revalidate)
+let cachedRooms: any[] | null = null;
+let cachedActivity: any[] | null = null;
+let cachedDeadlines: any[] | null = null;
+
 export default function Dashboard() {
   const router = useRouter();
   const { data: session } = useSession();
   const preferences = usePreferences();
 
-  const [rooms, setRooms] = useState<any[]>([]);
-  const [deadlines, setDeadlines] = useState<any[]>([]);
-  const [recentActivity, setRecentActivity] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [rooms, setRooms] = useState<any[]>(cachedRooms || []);
+  const [deadlines, setDeadlines] = useState<any[]>(cachedDeadlines || []);
+  const [recentActivity, setRecentActivity] = useState<any[]>(cachedActivity || []);
+  const [isRoomsLoading, setIsRoomsLoading] = useState(!cachedRooms);
+  const [isActivityLoading, setIsActivityLoading] = useState(!cachedActivity);
+  const [isDeadlinesLoading, setIsDeadlinesLoading] = useState(!cachedDeadlines);
 
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
@@ -34,61 +41,75 @@ export default function Dashboard() {
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
-  const fetchRooms = useCallback(async () => {
-    setIsLoading(true);
+  const fetchRoomsData = useCallback(async () => {
+    if (!cachedRooms) setIsRoomsLoading(true);
     const res = await getUserRooms();
     if (res.success && res.rooms) {
       setRooms(res.rooms);
+      cachedRooms = res.rooms;
     }
-    
-    const actRes = await getRecentActivity();
-    if (actRes.success && actRes.activities) {
-      const formattedActivities = actRes.activities.map((a: any) => ({
-        id: a.id,
-        user: a.username ? a.username : (a.user ? a.user.split(" ")[0] : "User"),
-        action: a.action,
-        target: a.target || "",
-        time: new Date(a.createdAt).toLocaleString(undefined, {
-          month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-        }),
-        subject: a.roomName,
-      }));
-      setRecentActivity(formattedActivities);
-    }
-    
-    const dlRes = await getUpcomingDeadlines();
-    if (dlRes.success && dlRes.deadlines) {
-      const now = new Date();
-      const formattedDeadlines = dlRes.deadlines.map((dl: any) => {
-        const deadlineDate = new Date(dl.deadline);
-        const hoursDiff = (deadlineDate.getTime() - now.getTime()) / (1000 * 60 * 60);
-        
-        let status = 'green';
-        if (hoursDiff <= 4) {
-          status = 'red';
-        } else if (hoursDiff <= 24) {
-          status = 'yellow';
-        }
-
-        return {
-          id: dl.id,
-          task: dl.title,
-          subject: dl.roomName,
-          status,
-          due: deadlineDate.toLocaleString(undefined, {
-            month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-          })
-        };
-      });
-      setDeadlines(formattedDeadlines);
-    }
-    
-    setIsLoading(false);
+    setIsRoomsLoading(false);
   }, []);
 
+  const fetchDashboardData = useCallback(() => {
+    fetchRoomsData();
+    
+    (async () => {
+      if (!cachedActivity) setIsActivityLoading(true);
+      const actRes = await getRecentActivity();
+      if (actRes.success && actRes.activities) {
+        const formattedActivities = actRes.activities.map((a: any) => ({
+          id: a.id,
+          user: a.username ? a.username : (a.user ? a.user.split(" ")[0] : "User"),
+          action: a.action,
+          target: a.target || "",
+          time: new Date(a.createdAt).toLocaleString(undefined, {
+            month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+          }),
+          subject: a.roomName,
+        }));
+        setRecentActivity(formattedActivities);
+        cachedActivity = formattedActivities;
+      }
+      setIsActivityLoading(false);
+    })();
+    
+    (async () => {
+      if (!cachedDeadlines) setIsDeadlinesLoading(true);
+      const dlRes = await getUpcomingDeadlines();
+      if (dlRes.success && dlRes.deadlines) {
+        const now = new Date();
+        const formattedDeadlines = dlRes.deadlines.map((dl: any) => {
+          const deadlineDate = new Date(dl.deadline);
+          const hoursDiff = (deadlineDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+          
+          let status = 'green';
+          if (hoursDiff <= 4) {
+            status = 'red';
+          } else if (hoursDiff <= 24) {
+            status = 'yellow';
+          }
+
+          return {
+            id: dl.id,
+            task: dl.title,
+            subject: dl.roomName,
+            status,
+            due: deadlineDate.toLocaleString(undefined, {
+              month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+            })
+          };
+        });
+        setDeadlines(formattedDeadlines);
+        cachedDeadlines = formattedDeadlines;
+      }
+      setIsDeadlinesLoading(false);
+    })();
+  }, [fetchRoomsData]);
+
   useEffect(() => {
-    fetchRooms();
-  }, [fetchRooms]);
+    fetchDashboardData();
+  }, [fetchDashboardData]);
 
   const openModal = (type: "create" | "join") => {
     setModalType(type);
@@ -106,7 +127,7 @@ export default function Dashboard() {
         isOpen={modalOpen} 
         type={modalType} 
         onClose={closeModal} 
-        onSuccess={fetchRooms} 
+        onSuccess={fetchRoomsData} 
       />
 
       {/* Welcome Banner */}
@@ -148,7 +169,7 @@ export default function Dashboard() {
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {isLoading ? (
+              {isRoomsLoading ? (
                 <>
                   {[1, 2].map((i) => (
                     <div key={i} className="group relative rounded-2xl glass-card p-5 animate-pulse">
@@ -227,7 +248,7 @@ export default function Dashboard() {
                 </h2>
               </div>
               <div className="rounded-2xl glass-card overflow-y-auto max-h-[380px] custom-scrollbar">
-                {isLoading ? (
+                {isActivityLoading ? (
                   <div className="divide-y divide-border">
                     {[1, 2, 3].map((i) => (
                       <div key={i} className="p-4 animate-pulse">
@@ -288,7 +309,7 @@ export default function Dashboard() {
               </h2>
             </div>
             
-            {isLoading ? (
+            {isDeadlinesLoading ? (
               <div className="space-y-4">
                 {[1, 2, 3].map((i) => (
                   <div key={i} className="rounded-2xl glass-card p-4 animate-pulse">

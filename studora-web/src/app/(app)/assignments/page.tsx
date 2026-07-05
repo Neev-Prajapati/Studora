@@ -8,12 +8,14 @@ import AssignmentModals from "@/components/AssignmentModals";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+let cachedAssignmentRooms: any[] | null = null;
+
 export default function AssignmentsDashboard() {
   const router = useRouter();
   const { data: session } = useSession();
 
-  const [rooms, setRooms] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [rooms, setRooms] = useState<any[]>(cachedAssignmentRooms || []);
+  const [isLoading, setIsLoading] = useState(!cachedAssignmentRooms);
 
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
@@ -30,10 +32,11 @@ export default function AssignmentsDashboard() {
   };
 
   const fetchRooms = useCallback(async () => {
-    setIsLoading(true);
+    if (!cachedAssignmentRooms) setIsLoading(true);
     const res = await getAssignmentRooms();
     if (res.success && res.rooms) {
       setRooms(res.rooms);
+      cachedAssignmentRooms = res.rooms;
     }
     setIsLoading(false);
   }, []);
