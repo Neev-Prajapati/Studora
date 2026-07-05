@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Folder, Users, Settings, Upload, FileText, Download, Eye, Trash2, ArrowLeft, MoreVertical, Loader2 } from "lucide-react";
 import Link from "next/link";
 import RoomSettingsModal from "./RoomSettingsModal";
+import FilePreviewModal from "./FilePreviewModal";
 import { deleteFileAction, updateMemberRole, removeMember, saveFileRecord } from "@/actions/room";
 import { useRouter } from "next/navigation";
 
@@ -20,6 +21,7 @@ export default function RoomView({
   const router = useRouter();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [previewFile, setPreviewFile] = useState<{url: string, name: string} | null>(null);
   
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
@@ -95,6 +97,13 @@ export default function RoomView({
         roomId={roomId}
         roomName={roomName}
         members={members}
+      />
+      
+      <FilePreviewModal 
+        isOpen={!!previewFile}
+        onClose={() => setPreviewFile(null)}
+        fileUrl={previewFile?.url || null}
+        fileName={previewFile?.name || null}
       />
 
       {/* Header */}
@@ -200,15 +209,13 @@ export default function RoomView({
                     </div>
                     
                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <a 
-                        href={file.url} 
-                        target="_blank" 
-                        rel="noreferrer"
+                      <button 
+                        onClick={() => setPreviewFile({ url: file.url, name: file.name })}
                         className="p-2 text-muted-foreground hover:text-foreground hover:bg-background rounded-md transition-colors inline-flex" 
-                        title="Preview"
+                        title="Preview in App"
                       >
                         <Eye className="w-4 h-4" />
-                      </a>
+                      </button>
                       <a 
                         href={file.url} 
                         download={file.name}

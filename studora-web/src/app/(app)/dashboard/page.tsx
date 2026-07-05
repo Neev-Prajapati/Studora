@@ -30,7 +30,7 @@ export default function Dashboard() {
     if (actRes.success && actRes.activities) {
       const formattedActivities = actRes.activities.map((a: any) => ({
         id: a.id,
-        user: a.username ? `@${a.username}` : (a.user ? a.user.split(" ")[0] : "User"),
+        user: a.username ? a.username : (a.user ? a.user.split(" ")[0] : "User"),
         action: a.action,
         target: a.target || "",
         time: new Date(a.createdAt).toLocaleString(undefined, {
@@ -168,7 +168,7 @@ export default function Dashboard() {
                 Recent Activity
               </h2>
             </div>
-            <div className="rounded-xl border border-border bg-card overflow-hidden">
+            <div className="rounded-xl border border-border bg-card overflow-y-auto max-h-[380px] custom-scrollbar">
               {recentActivity.length === 0 ? (
                  <div className="p-8 text-center flex flex-col items-center">
                     <Activity className="h-8 w-8 text-muted-foreground/50 mb-3" />
