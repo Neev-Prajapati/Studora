@@ -1,14 +1,18 @@
 "use client";
 
-import { User, LogOut, Edit2 } from "lucide-react";
+import { User, LogOut, Edit2, Menu, X, Home, CheckSquare, Settings, BookOpen } from "lucide-react";
 import { useSession, signOut } from "@/lib/auth-client";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
 import EditUsernameModal from "./EditUsernameModal";
 
 export default function TopNav() {
   const { data: session } = useSession();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isEditUsernameOpen, setIsEditUsernameOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
   const currentUsername = session?.user?.name ? ((session.user as any).username ? `${(session.user as any).username}` : session.user.name.split(" ")[0]) : "";
 
   return (
@@ -20,6 +24,12 @@ export default function TopNav() {
     />
     <header className="h-16 flex-shrink-0 glass border-b border-border/50 flex items-center justify-between px-6 z-10 sticky top-0">
       <div className="flex-1 flex items-center">
+        <button 
+          className="md:hidden p-2 -ml-2 mr-2 text-foreground hover:bg-muted rounded-md transition-colors"
+          onClick={() => setIsMobileMenuOpen(true)}
+        >
+          <Menu className="h-6 w-6" />
+        </button>
         {/* Removed Search Bar */}
       </div>
       <div className="ml-4 flex items-center gap-4">
@@ -71,6 +81,68 @@ export default function TopNav() {
         </div>
       </div>
     </header>
+
+    {/* Mobile Sidebar Overlay */}
+    {isMobileMenuOpen && (
+      <div className="fixed inset-0 z-[60] flex md:hidden">
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)}></div>
+        <div className="relative w-64 max-w-sm flex flex-col glass h-full animate-in slide-in-from-left duration-300 shadow-2xl">
+          <div className="h-16 flex items-center justify-between px-6 border-b border-sidebar-border/50">
+            <div className="flex items-center">
+              <div className="bg-primary/20 p-2 rounded-xl mr-3 border border-primary/30">
+                <BookOpen className="h-5 w-5 text-primary" />
+              </div>
+              <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">Studora</span>
+            </div>
+            <button onClick={() => setIsMobileMenuOpen(false)} className="p-1 -mr-2 text-muted-foreground hover:bg-muted rounded-md">
+              <X className="h-5 w-5"/>
+            </button>
+          </div>
+          
+          <div className="flex-1 py-6 px-4 space-y-1 overflow-y-auto">
+            <Link 
+              href="/dashboard" 
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`group flex items-center px-4 py-2.5 my-1 text-sm font-medium rounded-full transition-all duration-300 ${
+                pathname === "/dashboard" 
+                  ? "bg-primary text-primary-foreground shadow-md shadow-primary/20" 
+                  : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+              }`}
+            >
+              <Home className={`h-5 w-5 mr-3 transition-colors ${pathname === '/dashboard' ? 'text-primary-foreground' : 'text-muted-foreground group-hover:text-primary'}`} />
+              Dashboard
+            </Link>
+            <Link 
+              href="/assignments" 
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`group flex items-center px-4 py-2.5 my-1 text-sm font-medium rounded-full transition-all duration-300 ${
+                pathname.startsWith('/assignments')
+                  ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20' 
+                  : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
+              }`}
+            >
+              <CheckSquare className={`h-5 w-5 mr-3 transition-colors ${pathname.startsWith('/assignments') ? 'text-primary-foreground' : 'text-muted-foreground group-hover:text-primary'}`} />
+              Assignments
+            </Link>
+          </div>
+
+          <div className="p-4 border-t border-sidebar-border/50">
+            <Link 
+              href="/settings" 
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`group flex items-center px-4 py-2.5 my-1 text-sm font-medium rounded-full transition-all duration-300 ${
+                pathname.startsWith('/settings')
+                  ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20' 
+                  : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
+              }`}
+            >
+              <Settings className={`h-5 w-5 mr-3 transition-colors ${pathname.startsWith('/settings') ? 'text-primary-foreground' : 'text-muted-foreground group-hover:text-primary'}`} />
+              Settings
+            </Link>
+          </div>
+        </div>
+      </div>
+    )}
     </>
   );
 }
