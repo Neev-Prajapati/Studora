@@ -116,6 +116,8 @@ export const assignment = pgTable("assignment", {
     fileUrl: text("file_url").notNull(),
     fileName: text("file_name").notNull(),
     deadline: timestamp("deadline").notNull(),
+    reminder24hSent: boolean("reminder_24h_sent").default(false).notNull(),
+    reminder4hSent: boolean("reminder_4h_sent").default(false).notNull(),
     createdBy: text("created_by").notNull().references(() => user.id),
     createdAt: timestamp("created_at").defaultNow().notNull(),
 });
