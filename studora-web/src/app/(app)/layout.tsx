@@ -1,6 +1,7 @@
 import Sidebar from "@/components/Sidebar";
 import TopNav from "@/components/TopNav";
 import AuthGuard from "@/components/AuthGuard";
+import DeadlinePopup from "@/components/DeadlinePopup";
 
 export default function AppLayout({
   children,
@@ -15,6 +16,7 @@ export default function AppLayout({
           <TopNav />
           <main className="flex-1 overflow-y-auto outline-none">
             {children}
+            <DeadlinePopup />
           </main>
         </div>
       </div>
