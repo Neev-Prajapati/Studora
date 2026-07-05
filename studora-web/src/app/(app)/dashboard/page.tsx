@@ -151,7 +151,7 @@ export default function Dashboard() {
               {isLoading ? (
                 <>
                   {[1, 2].map((i) => (
-                    <div key={i} className="group relative rounded-xl border border-border bg-card p-5 animate-pulse">
+                    <div key={i} className="group relative rounded-2xl glass-card p-5 animate-pulse">
                       <div className="flex justify-between items-start mb-4">
                         <div className="h-10 w-10 rounded-lg bg-muted"></div>
                         <div className="h-4 w-12 bg-muted rounded-sm"></div>
@@ -181,7 +181,7 @@ export default function Dashboard() {
                 </div>
               ) : (
                 rooms.map((room) => (
-                  <div key={room.id} onClick={() => router.push(`/rooms/${room.id}`)} className="group relative rounded-xl border border-border bg-card p-5 hover:border-primary/50 hover:shadow-md transition-all cursor-pointer">
+                  <div key={room.id} onClick={() => router.push(`/rooms/${room.id}`)} className="group relative rounded-2xl glass-card p-5 hover:-translate-y-1 transition-all cursor-pointer">
                     <div className="flex justify-between items-start mb-4">
                       <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
                         <Folder className="h-5 w-5" />
@@ -226,7 +226,7 @@ export default function Dashboard() {
                   Recent Activity
                 </h2>
               </div>
-              <div className="rounded-xl border border-border bg-card overflow-y-auto max-h-[380px] custom-scrollbar">
+              <div className="rounded-2xl glass-card overflow-y-auto max-h-[380px] custom-scrollbar">
                 {isLoading ? (
                   <div className="divide-y divide-border">
                     {[1, 2, 3].map((i) => (
@@ -291,8 +291,8 @@ export default function Dashboard() {
             {isLoading ? (
               <div className="space-y-4">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="rounded-xl border border-border bg-card p-4 animate-pulse">
-                    <div className="pl-3 space-y-3">
+                  <div key={i} className="rounded-2xl glass-card p-4 animate-pulse">
+                    <div className="flex items-start gap-3">
                       <div className="flex justify-between items-start mb-1">
                         <div className="h-3 w-1/3 bg-muted rounded"></div>
                         <div className="h-4 w-12 bg-muted rounded-sm"></div>
@@ -304,15 +304,17 @@ export default function Dashboard() {
                 ))}
               </div>
             ) : deadlines.length === 0 ? (
-               <div className="rounded-xl border border-border bg-card p-8 text-center flex flex-col items-center">
-                  <Clock className="h-8 w-8 text-muted-foreground/50 mb-3" />
+               <div className="rounded-2xl glass-card p-8 text-center flex flex-col items-center">
+                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-3">
+                    <Clock className="h-6 w-6 text-primary" />
+                  </div>
                   <p className="text-muted-foreground text-sm font-medium">All caught up!</p>
                   <p className="text-xs text-muted-foreground mt-1">No upcoming deadlines.</p>
                </div>
             ) : (
               <div className="space-y-4">
                 {deadlines.map((deadline) => (
-                  <div key={deadline.id} onClick={() => router.push(`/assignments`)} className="rounded-xl border border-border bg-card p-4 relative overflow-hidden group hover:border-primary/50 transition-colors cursor-pointer">
+                  <div key={deadline.id} onClick={() => router.push(`/assignments`)} className="rounded-2xl glass-card p-4 relative overflow-hidden group hover:-translate-y-1 transition-all cursor-pointer">
                     {deadline.status === 'red' && (
                       <div className="absolute top-0 left-0 w-1 h-full bg-destructive" />
                     )}

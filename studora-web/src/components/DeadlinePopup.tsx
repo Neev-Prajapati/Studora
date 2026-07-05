@@ -64,8 +64,8 @@ export default function DeadlinePopup() {
   }
 
   return (
-    <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-top-5 fade-in duration-500 max-w-sm w-full">
-      <div className="bg-card border border-border shadow-lg rounded-xl overflow-hidden flex flex-col relative group">
+    <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-top-5 fade-in duration-500 max-w-sm w-full shadow-2xl drop-shadow-2xl">
+      <div className="bg-background/95 backdrop-blur-2xl border border-white/10 shadow-2xl rounded-2xl overflow-hidden flex flex-col relative group ring-1 ring-white/5">
         <div className="absolute top-0 left-0 w-1 h-full bg-orange-500" />
         
         <button 

@@ -97,7 +97,7 @@ export default function AssignmentsDashboard() {
             {isLoading ? (
                 <>
                   {[1, 2, 3].map((i) => (
-                    <div key={i} className="group relative rounded-xl border border-border bg-card p-5 animate-pulse">
+                    <div key={i} className="group relative rounded-2xl glass-card p-5 animate-pulse">
                       <div className="flex justify-between items-start mb-4">
                         <div className="h-10 w-10 rounded-lg bg-muted"></div>
                         <div className="h-4 w-12 bg-muted rounded-sm"></div>
@@ -127,7 +127,7 @@ export default function AssignmentsDashboard() {
               </div>
             ) : (
               rooms.map((room) => (
-                <div key={room.id} onClick={() => router.push(`/assignments/${room.id}`)} className="group relative rounded-xl border border-border bg-card p-5 hover:border-primary/50 hover:shadow-md transition-all cursor-pointer">
+                <div key={room.id} onClick={() => router.push(`/assignments/${room.id}`)} className="group relative rounded-2xl glass-card p-5 hover:-translate-y-1 transition-all cursor-pointer">
                   <div className="flex justify-between items-start mb-4">
                     <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
                       <Folder className="h-5 w-5" />

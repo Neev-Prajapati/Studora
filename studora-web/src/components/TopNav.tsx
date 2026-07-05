@@ -18,7 +18,7 @@ export default function TopNav() {
       onClose={() => setIsEditUsernameOpen(false)} 
       currentUsername={currentUsername}
     />
-    <header className="h-16 flex-shrink-0 bg-background border-b border-border flex items-center justify-between px-6">
+    <header className="h-16 flex-shrink-0 glass border-b border-border/50 flex items-center justify-between px-6 z-10 sticky top-0">
       <div className="flex-1 flex items-center">
         {/* Removed Search Bar */}
       </div>
