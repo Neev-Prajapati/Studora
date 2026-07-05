@@ -87,3 +87,54 @@ export const activityLog = pgTable("activity_log", {
     target: text("target"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+export const assignmentRoom = pgTable("assignment_room", {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    name: text("name").notNull(),
+    description: text("description"),
+    inviteCode: text("invite_code").notNull().unique(),
+    ownerId: text("owner_id").notNull().references(() => user.id),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const assignmentRoomMember = pgTable("assignment_room_member", {
+    roomId: text("room_id").notNull().references(() => assignmentRoom.id, { onDelete: 'cascade' }),
+    userId: text("user_id").notNull().references(() => user.id, { onDelete: 'cascade' }),
+    role: roleEnum("role").notNull().default('viewer'),
+    joinedAt: timestamp("joined_at").defaultNow().notNull(),
+}, (table) => {
+    return {
+        pk: primaryKey({ columns: [table.roomId, table.userId] })
+    };
+});
+
+export const assignment = pgTable("assignment", {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    roomId: text("room_id").notNull().references(() => assignmentRoom.id, { onDelete: 'cascade' }),
+    title: text("title").notNull(),
+    description: text("description"),
+    fileUrl: text("file_url").notNull(),
+    fileName: text("file_name").notNull(),
+    deadline: timestamp("deadline").notNull(),
+    createdBy: text("created_by").notNull().references(() => user.id),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const assignmentSubmission = pgTable("assignment_submission", {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    assignmentId: text("assignment_id").notNull().references(() => assignment.id, { onDelete: 'cascade' }),
+    userId: text("user_id").notNull().references(() => user.id, { onDelete: 'cascade' }),
+    fileUrl: text("file_url").notNull(),
+    fileName: text("file_name").notNull(),
+    submittedAt: timestamp("submitted_at").defaultNow().notNull(),
+});
+
+export const assignmentActivityLog = pgTable("assignment_activity_log", {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    roomId: text("room_id").notNull().references(() => assignmentRoom.id, { onDelete: 'cascade' }),
+    roomName: text("room_name").notNull(),
+    userId: text("user_id").notNull().references(() => user.id, { onDelete: 'cascade' }),
+    action: text("action").notNull(),
+    target: text("target"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+});

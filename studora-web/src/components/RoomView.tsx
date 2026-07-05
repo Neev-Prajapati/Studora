@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Folder, Users, Settings, Upload, FileText, Download, Eye, Trash2, ArrowLeft, MoreVertical, Loader2 } from "lucide-react";
+import { Folder, Users, Settings, Upload, FileText, Download, Eye, Trash2, ArrowLeft, MoreVertical, Loader2, Copy, Check } from "lucide-react";
 import Link from "next/link";
 import RoomSettingsModal from "./RoomSettingsModal";
 import FilePreviewModal from "./FilePreviewModal";
@@ -22,6 +22,13 @@ export default function RoomView({
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [previewFile, setPreviewFile] = useState<{url: string, name: string} | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const copyCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
   
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
@@ -131,9 +138,14 @@ export default function RoomView({
           <div className="hidden sm:flex items-center gap-4 text-right">
             <div>
               <p className="text-sm font-medium text-muted-foreground mb-1 text-left">Invite Code</p>
-              <div className="font-mono text-lg font-bold tracking-widest bg-muted px-3 py-1 rounded-md text-foreground">
+              <button 
+                onClick={() => copyCode(inviteCode)}
+                className="font-mono text-lg font-bold tracking-widest bg-muted px-3 py-1 rounded-md text-foreground hover:bg-muted/80 transition-colors flex items-center gap-2"
+                title="Copy Code"
+              >
                 {inviteCode}
-              </div>
+                {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-muted-foreground" />}
+              </button>
             </div>
             {role === 'owner' && (
               <button 

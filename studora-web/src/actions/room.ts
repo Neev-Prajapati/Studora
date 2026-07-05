@@ -513,28 +513,58 @@ export async function getRecentActivity() {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session || !session.user) return { error: "Unauthorized", activities: [] };
 
-    const { activityLog, user } = await import("@/db/schema");
+    const { activityLog, assignmentActivityLog, user } = await import("@/db/schema");
 
-    // Get user's rooms
+    // Get user's study rooms
     const userRooms = await db.select({ roomId: roomMember.roomId }).from(roomMember).where(eq(roomMember.userId, session.user.id));
     const roomIds = userRooms.map(r => r.roomId);
 
-    if (roomIds.length === 0) return { success: true, activities: [] };
+    // Get user's assignment rooms
+    const { assignmentRoomMember } = await import("@/db/schema");
+    const userAssignmentRooms = await db.select({ roomId: assignmentRoomMember.roomId }).from(assignmentRoomMember).where(eq(assignmentRoomMember.userId, session.user.id));
+    const assignmentRoomIds = userAssignmentRooms.map(r => r.roomId);
 
-    const logs = await db.select({
-      id: activityLog.id,
-      user: user.name,
-      username: user.username,
-      action: activityLog.action,
-      target: activityLog.target,
-      roomName: activityLog.roomName,
-      createdAt: activityLog.createdAt,
-    })
-    .from(activityLog)
-    .innerJoin(user, eq(activityLog.userId, user.id))
-    .where(inArray(activityLog.roomId, roomIds))
-    .orderBy(desc(activityLog.createdAt))
-    .limit(30);
+    let logs: any[] = [];
+
+    if (roomIds.length > 0) {
+      const studyLogs = await db.select({
+        id: activityLog.id,
+        user: user.name,
+        username: user.username,
+        action: activityLog.action,
+        target: activityLog.target,
+        roomName: activityLog.roomName,
+        createdAt: activityLog.createdAt,
+      })
+      .from(activityLog)
+      .innerJoin(user, eq(activityLog.userId, user.id))
+      .where(inArray(activityLog.roomId, roomIds))
+      .orderBy(desc(activityLog.createdAt))
+      .limit(30);
+      logs = [...logs, ...studyLogs];
+    }
+
+    if (assignmentRoomIds.length > 0) {
+      const assignLogs = await db.select({
+        id: assignmentActivityLog.id,
+        user: user.name,
+        username: user.username,
+        action: assignmentActivityLog.action,
+        target: assignmentActivityLog.target,
+        roomName: assignmentActivityLog.roomName,
+        createdAt: assignmentActivityLog.createdAt,
+      })
+      .from(assignmentActivityLog)
+      .innerJoin(user, eq(assignmentActivityLog.userId, user.id))
+      .where(inArray(assignmentActivityLog.roomId, assignmentRoomIds))
+      .orderBy(desc(assignmentActivityLog.createdAt))
+      .limit(30);
+      logs = [...logs, ...assignLogs];
+    }
+
+    // Sort combined logs by date descending and take top 30
+    logs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    logs = logs.slice(0, 30);
 
     return { success: true, activities: logs };
   } catch (error) {

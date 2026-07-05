@@ -1,9 +1,10 @@
 "use client";
 
-import { Folder, Clock, FileText, ChevronRight, MoreHorizontal, Activity, Plus } from "lucide-react";
+import { Folder, Clock, FileText, ChevronRight, MoreHorizontal, Activity, Plus, Copy, Check } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "@/lib/auth-client";
 import { getUserRooms, getRecentActivity } from "@/actions/room";
+import { getUpcomingDeadlines } from "@/actions/assignment";
 import RoomModals from "@/components/RoomModals";
 import Link from "next/link";
 
@@ -18,6 +19,16 @@ export default function Dashboard() {
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState<"create" | "join" | null>(null);
+
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+
+  const copyCode = (code: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigator.clipboard.writeText(code);
+    setCopiedCode(code);
+    setTimeout(() => setCopiedCode(null), 2000);
+  };
 
   const fetchRooms = useCallback(async () => {
     setIsLoading(true);
@@ -39,6 +50,33 @@ export default function Dashboard() {
         subject: a.roomName,
       }));
       setRecentActivity(formattedActivities);
+    }
+    
+    const dlRes = await getUpcomingDeadlines();
+    if (dlRes.success && dlRes.deadlines) {
+      const now = new Date();
+      const formattedDeadlines = dlRes.deadlines.map((dl: any) => {
+        const deadlineDate = new Date(dl.deadline);
+        const hoursDiff = (deadlineDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+        
+        let status = 'green';
+        if (hoursDiff <= 4) {
+          status = 'red';
+        } else if (hoursDiff <= 24) {
+          status = 'yellow';
+        }
+
+        return {
+          id: dl.id,
+          task: dl.title,
+          subject: dl.roomName,
+          status,
+          due: deadlineDate.toLocaleString(undefined, {
+            month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+          })
+        };
+      });
+      setDeadlines(formattedDeadlines);
     }
     
     setIsLoading(false);
@@ -146,9 +184,14 @@ export default function Dashboard() {
                     {room.description && <p className="text-xs text-muted-foreground line-clamp-1 mt-1">{room.description}</p>}
                     <div className="mt-3 flex items-center justify-between text-sm text-muted-foreground border-t border-border pt-3">
                       <div className="flex items-center">
-                        <span className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded text-foreground mr-2" title="Invite Code">
+                        <button 
+                          onClick={(e) => copyCode(room.inviteCode, e)}
+                          className="font-mono text-xs bg-muted px-2 py-1 rounded-md text-foreground mr-2 hover:bg-muted/80 transition-colors flex items-center gap-1" 
+                          title="Copy Code"
+                        >
                           {room.inviteCode}
-                        </span>
+                          {copiedCode === room.inviteCode ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3 text-muted-foreground" />}
+                        </button>
                       </div>
                       <Link href={`/rooms/${room.id}`} className="text-primary text-xs font-medium hover:underline">
                         Open Room
@@ -222,18 +265,31 @@ export default function Dashboard() {
               <div className="space-y-4">
                 {deadlines.map((deadline) => (
                   <div key={deadline.id} className="rounded-xl border border-border bg-card p-4 relative overflow-hidden group hover:border-primary/50 transition-colors cursor-pointer">
-                    {deadline.urgent && (
+                    {deadline.status === 'red' && (
                       <div className="absolute top-0 left-0 w-1 h-full bg-destructive" />
                     )}
-                    {!deadline.urgent && (
-                      <div className="absolute top-0 left-0 w-1 h-full bg-primary" />
+                    {deadline.status === 'yellow' && (
+                      <div className="absolute top-0 left-0 w-1 h-full bg-yellow-500" />
+                    )}
+                    {deadline.status === 'green' && (
+                      <div className="absolute top-0 left-0 w-1 h-full bg-green-500" />
                     )}
                     <div className="pl-3">
                       <div className="flex justify-between items-start mb-1">
                         <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{deadline.subject}</span>
-                        {deadline.urgent && (
+                        {deadline.status === 'red' && (
                           <span className="inline-flex items-center rounded-sm bg-destructive/10 px-1.5 py-0.5 text-[10px] font-medium text-destructive">
                             Urgent
+                          </span>
+                        )}
+                        {deadline.status === 'yellow' && (
+                          <span className="inline-flex items-center rounded-sm bg-yellow-500/10 px-1.5 py-0.5 text-[10px] font-medium text-yellow-500">
+                            Soon
+                          </span>
+                        )}
+                        {deadline.status === 'green' && (
+                          <span className="inline-flex items-center rounded-sm bg-green-500/10 px-1.5 py-0.5 text-[10px] font-medium text-green-500">
+                            Upcoming
                           </span>
                         )}
                       </div>

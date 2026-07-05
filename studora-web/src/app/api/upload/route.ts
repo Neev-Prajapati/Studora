@@ -15,15 +15,34 @@ export async function POST(req: Request) {
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
     const roomId = formData.get("roomId") as string | null;
+    const roomType = (formData.get("roomType") as string) || "study";
+    const uploadType = (formData.get("uploadType") as string) || "material";
 
     if (!file || !roomId) return NextResponse.json({ error: "File and roomId are required" }, { status: 400 });
 
-    const membership = await db.select().from(roomMember).where(
-      and(eq(roomMember.roomId, roomId), eq(roomMember.userId, session.user.id))
-    );
-    
-    if (membership.length === 0 || (membership[0].role !== "owner" && membership[0].role !== "editor")) {
-      return NextResponse.json({ error: "Permission denied" }, { status: 403 });
+    if (roomType === "study") {
+      const membership = await db.select().from(roomMember).where(
+        and(eq(roomMember.roomId, roomId), eq(roomMember.userId, session.user.id))
+      );
+      if (membership.length === 0 || (membership[0].role !== "owner" && membership[0].role !== "editor")) {
+        return NextResponse.json({ error: "Permission denied" }, { status: 403 });
+      }
+    } else if (roomType === "assignment") {
+      const { assignmentRoomMember } = await import("@/db/schema");
+      const membership = await db.select().from(assignmentRoomMember).where(
+        and(eq(assignmentRoomMember.roomId, roomId), eq(assignmentRoomMember.userId, session.user.id))
+      );
+      if (membership.length === 0) {
+        return NextResponse.json({ error: "Permission denied (not in room)" }, { status: 403 });
+      }
+      const role = membership[0].role;
+      if (uploadType === "assignment" && role !== "owner" && role !== "editor") {
+        return NextResponse.json({ error: "Permission denied (only owners/editors can create assignments)" }, { status: 403 });
+      }
+      if (uploadType === "solution" && role !== "viewer") {
+        // Technically anyone could submit, but normally students (viewers) submit. 
+        // We'll allow owners/editors to submit too for testing.
+      }
     }
 
     const bytes = await file.arrayBuffer();
