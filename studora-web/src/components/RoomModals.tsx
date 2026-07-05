@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { createRoom, joinRoom } from "@/actions/room";
-import { X } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 
 type RoomModalsProps = {
   isOpen: boolean;
@@ -70,7 +70,7 @@ export default function RoomModals({ isOpen, type, onClose, onSuccess }: RoomMod
         {type === "create" ? (
           <form onSubmit={handleCreate} className="p-6 space-y-6">
             <div>
-              <h2 className="text-xl font-bold text-foreground">Create a Study Room</h2>
+              <h2 className="text-xl font-bold text-foreground">Create a Subject</h2>
               <p className="text-sm text-muted-foreground mt-1">
                 Create a space to share materials with your classmates.
               </p>
@@ -86,7 +86,7 @@ export default function RoomModals({ isOpen, type, onClose, onSuccess }: RoomMod
                   required
                   value={roomName}
                   onChange={(e) => setRoomName(e.target.value)}
-                  placeholder="e.g. CS101 Study Group"
+                  placeholder="e.g. CS101"
                   className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
                 />
               </div>
@@ -118,16 +118,17 @@ export default function RoomModals({ isOpen, type, onClose, onSuccess }: RoomMod
               <button
                 type="submit"
                 disabled={loading || !roomName.trim()}
-                className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md transition-colors disabled:opacity-50"
               >
-                {loading ? "Creating..." : "Create Room"}
+                {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                {loading ? "Creating..." : "Create Subject"}
               </button>
             </div>
           </form>
         ) : (
           <form onSubmit={handleJoin} className="p-6 space-y-6">
             <div>
-              <h2 className="text-xl font-bold text-foreground">Join a Study Room</h2>
+              <h2 className="text-xl font-bold text-foreground">Join a Subject</h2>
               <p className="text-sm text-muted-foreground mt-1">
                 Enter the 6-character invite code provided by the room owner.
               </p>
@@ -163,9 +164,10 @@ export default function RoomModals({ isOpen, type, onClose, onSuccess }: RoomMod
               <button
                 type="submit"
                 disabled={loading || inviteCode.length !== 6}
-                className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md transition-colors disabled:opacity-50"
               >
-                {loading ? "Joining..." : "Join Room"}
+                {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                {loading ? "Joining..." : "Join Subject"}
               </button>
             </div>
           </form>

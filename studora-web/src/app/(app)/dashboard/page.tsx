@@ -7,9 +7,11 @@ import { getUserRooms, getRecentActivity } from "@/actions/room";
 import { getUpcomingDeadlines } from "@/actions/assignment";
 import RoomModals from "@/components/RoomModals";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { usePreferences } from "@/components/PreferencesProvider";
 
 export default function Dashboard() {
+  const router = useRouter();
   const { data: session } = useSession();
   const preferences = usePreferences();
 
@@ -115,11 +117,6 @@ export default function Dashboard() {
           </h1>
           <p className="text-muted-foreground mt-1">Here is an overview of your academic workspace.</p>
         </div>
-        <div className="hidden sm:flex items-center gap-2">
-          <span className="inline-flex items-center rounded-md bg-green-500/10 px-2 py-1 text-xs font-medium text-green-500 ring-1 ring-inset ring-green-500/20">
-            Systems Online
-          </span>
-        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -132,14 +129,14 @@ export default function Dashboard() {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
                 <Folder className="h-5 w-5 text-primary" />
-                Your Study Rooms
+                Your Subjects
               </h2>
               <div className="flex gap-2">
                 <button 
                   onClick={() => openModal('join')}
                   className="text-sm font-medium text-foreground hover:bg-muted px-3 py-1.5 rounded-md transition-colors"
                 >
-                  Join Room
+                  Join Subject
                 </button>
                 <button 
                   onClick={() => openModal('create')}
@@ -152,7 +149,22 @@ export default function Dashboard() {
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {isLoading ? (
-                 <div className="sm:col-span-2 p-8 text-center text-muted-foreground">Loading rooms...</div>
+                <>
+                  {[1, 2].map((i) => (
+                    <div key={i} className="group relative rounded-xl border border-border bg-card p-5 animate-pulse">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="h-10 w-10 rounded-lg bg-muted"></div>
+                        <div className="h-4 w-12 bg-muted rounded-sm"></div>
+                      </div>
+                      <div className="h-5 w-3/4 bg-muted rounded mb-2"></div>
+                      <div className="h-3 w-1/2 bg-muted rounded mb-4"></div>
+                      <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
+                        <div className="h-4 w-16 bg-muted rounded"></div>
+                        <div className="h-4 w-16 bg-muted rounded"></div>
+                      </div>
+                    </div>
+                  ))}
+                </>
               ) : rooms.length === 0 ? (
                 <div className="sm:col-span-2 rounded-xl border border-dashed border-border bg-transparent p-8 flex flex-col items-center justify-center text-center">
                   <Folder className="h-8 w-8 text-muted-foreground mb-3" />
@@ -160,7 +172,7 @@ export default function Dashboard() {
                   <p className="text-sm text-muted-foreground mb-4">Create or join a room to start collaborating.</p>
                   <div className="flex gap-3">
                     <button onClick={() => openModal('create')} className="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md text-sm font-medium transition-all shadow-sm">
-                      Create Room
+                      Create Subject
                     </button>
                     <button onClick={() => openModal('join')} className="bg-muted text-foreground hover:bg-muted/80 px-4 py-2 rounded-md text-sm font-medium transition-all shadow-sm">
                       Join via Code
@@ -169,7 +181,7 @@ export default function Dashboard() {
                 </div>
               ) : (
                 rooms.map((room) => (
-                  <div key={room.id} className="group relative rounded-xl border border-border bg-card p-5 hover:border-primary/50 hover:shadow-md transition-all cursor-pointer">
+                  <div key={room.id} onClick={() => router.push(`/rooms/${room.id}`)} className="group relative rounded-xl border border-border bg-card p-5 hover:border-primary/50 hover:shadow-md transition-all cursor-pointer">
                     <div className="flex justify-between items-start mb-4">
                       <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
                         <Folder className="h-5 w-5" />
@@ -195,8 +207,8 @@ export default function Dashboard() {
                           {copiedCode === room.inviteCode ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3 text-muted-foreground" />}
                         </button>
                       </div>
-                      <Link href={`/rooms/${room.id}`} className="text-primary text-xs font-medium hover:underline">
-                        Open Room
+                      <Link href={`/rooms/${room.id}`} onClick={(e) => e.stopPropagation()} className="text-primary text-xs font-medium hover:underline">
+                        Open
                       </Link>
                     </div>
                   </div>
@@ -215,7 +227,23 @@ export default function Dashboard() {
                 </h2>
               </div>
               <div className="rounded-xl border border-border bg-card overflow-y-auto max-h-[380px] custom-scrollbar">
-                {recentActivity.length === 0 ? (
+                {isLoading ? (
+                  <div className="divide-y divide-border">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="p-4 animate-pulse">
+                        <div className="flex space-x-3">
+                          <div className="flex-1 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <div className="h-4 w-1/2 bg-muted rounded"></div>
+                              <div className="h-3 w-16 bg-muted rounded"></div>
+                            </div>
+                            <div className="h-3 w-1/3 bg-muted rounded mt-2"></div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : recentActivity.length === 0 ? (
                    <div className="p-8 text-center flex flex-col items-center">
                       <Activity className="h-8 w-8 text-muted-foreground/50 mb-3" />
                       <p className="text-muted-foreground text-sm">No recent activity to show.</p>
@@ -260,7 +288,22 @@ export default function Dashboard() {
               </h2>
             </div>
             
-            {deadlines.length === 0 ? (
+            {isLoading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="rounded-xl border border-border bg-card p-4 animate-pulse">
+                    <div className="pl-3 space-y-3">
+                      <div className="flex justify-between items-start mb-1">
+                        <div className="h-3 w-1/3 bg-muted rounded"></div>
+                        <div className="h-4 w-12 bg-muted rounded-sm"></div>
+                      </div>
+                      <div className="h-4 w-3/4 bg-muted rounded"></div>
+                      <div className="h-3 w-1/2 bg-muted rounded"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : deadlines.length === 0 ? (
                <div className="rounded-xl border border-border bg-card p-8 text-center flex flex-col items-center">
                   <Clock className="h-8 w-8 text-muted-foreground/50 mb-3" />
                   <p className="text-muted-foreground text-sm font-medium">All caught up!</p>
@@ -269,7 +312,7 @@ export default function Dashboard() {
             ) : (
               <div className="space-y-4">
                 {deadlines.map((deadline) => (
-                  <div key={deadline.id} className="rounded-xl border border-border bg-card p-4 relative overflow-hidden group hover:border-primary/50 transition-colors cursor-pointer">
+                  <div key={deadline.id} onClick={() => router.push(`/assignments`)} className="rounded-xl border border-border bg-card p-4 relative overflow-hidden group hover:border-primary/50 transition-colors cursor-pointer">
                     {deadline.status === 'red' && (
                       <div className="absolute top-0 left-0 w-1 h-full bg-destructive" />
                     )}

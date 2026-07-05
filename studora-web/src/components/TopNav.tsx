@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, User, LogOut, Edit2 } from "lucide-react";
+import { User, LogOut, Edit2 } from "lucide-react";
 import { useSession, signOut } from "@/lib/auth-client";
 import { useState } from "react";
 import EditUsernameModal from "./EditUsernameModal";
@@ -23,12 +23,6 @@ export default function TopNav() {
         {/* Removed Search Bar */}
       </div>
       <div className="ml-4 flex items-center gap-4">
-        <button className="p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors relative">
-          <span className="sr-only">View notifications</span>
-          <Bell className="h-5 w-5" />
-          <span className="absolute top-1 right-1 block h-2 w-2 rounded-full bg-destructive ring-2 ring-background"></span>
-        </button>
-        
         <div className="relative">
           <button 
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}

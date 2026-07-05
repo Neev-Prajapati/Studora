@@ -285,7 +285,7 @@ export default function SettingsPage() {
                   <p className="text-sm text-muted-foreground">Permanently delete your account and all uploaded files.</p>
                 </div>
                 <div className="p-4 border border-red-500/20 bg-red-500/5 rounded-lg space-y-4">
-                  <p className="text-sm text-red-500 font-medium">This action cannot be undone. All your study rooms, assignments, and uploaded files will be permanently wiped from our servers.</p>
+                  <p className="text-sm text-red-500 font-medium">This action cannot be undone. All your subjects, assignments, and uploaded files will be permanently wiped from our servers.</p>
                   
                   <div className="space-y-2 max-w-sm">
                     <label className="text-sm text-red-500/80">Type "DELETE" to confirm</label>

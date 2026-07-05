@@ -6,8 +6,10 @@ import { useSession } from "@/lib/auth-client";
 import { getAssignmentRooms } from "@/actions/assignment";
 import AssignmentModals from "@/components/AssignmentModals";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function AssignmentsDashboard() {
+  const router = useRouter();
   const { data: session } = useSession();
 
   const [rooms, setRooms] = useState<any[]>([]);
@@ -93,7 +95,22 @@ export default function AssignmentsDashboard() {
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {isLoading ? (
-                <div className="col-span-full p-8 text-center text-muted-foreground">Loading rooms...</div>
+                <>
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="group relative rounded-xl border border-border bg-card p-5 animate-pulse">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="h-10 w-10 rounded-lg bg-muted"></div>
+                        <div className="h-4 w-12 bg-muted rounded-sm"></div>
+                      </div>
+                      <div className="h-5 w-3/4 bg-muted rounded mb-2"></div>
+                      <div className="h-3 w-1/2 bg-muted rounded mb-4"></div>
+                      <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
+                        <div className="h-4 w-16 bg-muted rounded"></div>
+                        <div className="h-4 w-16 bg-muted rounded"></div>
+                      </div>
+                    </div>
+                  ))}
+                </>
             ) : rooms.length === 0 ? (
               <div className="col-span-full rounded-xl border border-dashed border-border bg-transparent p-8 flex flex-col items-center justify-center text-center">
                 <Folder className="h-8 w-8 text-muted-foreground mb-3" />
@@ -110,7 +127,7 @@ export default function AssignmentsDashboard() {
               </div>
             ) : (
               rooms.map((room) => (
-                <div key={room.id} className="group relative rounded-xl border border-border bg-card p-5 hover:border-primary/50 hover:shadow-md transition-all cursor-pointer">
+                <div key={room.id} onClick={() => router.push(`/assignments/${room.id}`)} className="group relative rounded-xl border border-border bg-card p-5 hover:border-primary/50 hover:shadow-md transition-all cursor-pointer">
                   <div className="flex justify-between items-start mb-4">
                     <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
                       <Folder className="h-5 w-5" />
@@ -136,8 +153,8 @@ export default function AssignmentsDashboard() {
                         {copiedCode === room.inviteCode ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3 text-muted-foreground" />}
                       </button>
                     </div>
-                    <Link href={`/assignments/${room.id}`} className="text-primary text-xs font-medium hover:underline">
-                      Open Room
+                    <Link href={`/assignments/${room.id}`} onClick={(e) => e.stopPropagation()} className="text-primary text-xs font-medium hover:underline">
+                      Open
                     </Link>
                   </div>
                 </div>

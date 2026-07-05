@@ -9,7 +9,10 @@ export default function Sidebar() {
   
   return (
     <aside className="w-64 flex-shrink-0 bg-sidebar border-r border-sidebar-border hidden md:flex flex-col h-full">
-      <div className="h-16 flex items-center px-6 border-b border-sidebar-border">
+      <div 
+        onClick={() => window.location.reload()}
+        className="h-16 flex items-center px-6 border-b border-sidebar-border cursor-pointer hover:opacity-80 transition-opacity"
+      >
         <BookOpen className="h-6 w-6 text-sidebar-primary mr-2" />
         <span className="text-xl font-bold text-sidebar-foreground">Studora</span>
       </div>
