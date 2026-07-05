@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Folder, Users, Settings, Upload, FileText, Download, Eye, Trash2, ArrowLeft, MoreVertical } from "lucide-react";
+import { Folder, Users, Settings, Upload, FileText, Download, Eye, Trash2, ArrowLeft, MoreVertical, Loader2 } from "lucide-react";
 import Link from "next/link";
 import RoomSettingsModal from "./RoomSettingsModal";
-import { deleteFileAction, updateMemberRole, removeMember } from "@/actions/room";
+import { deleteFileAction, updateMemberRole, removeMember, saveFileRecord } from "@/actions/room";
 import { useRouter } from "next/navigation";
 
 export default function RoomView({ 
@@ -16,11 +16,58 @@ export default function RoomView({
   files, 
   members,
   currentUserId,
-  uploadAction 
 }: any) {
   const router = useRouter();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+
+  const handleUpload = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsUploading(true);
+    setUploadError("");
+
+    const formData = new FormData(e.currentTarget);
+    const file = formData.get("file") as File;
+
+    if (!file || file.size === 0) {
+      setUploadError("Please select a file to upload.");
+      setIsUploading(false);
+      return;
+    }
+
+    try {
+      formData.append("roomId", roomId);
+
+      // Upload file to local storage via API route
+      const uploadRes = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const uploadData = await uploadRes.json();
+
+      if (!uploadRes.ok) {
+        throw new Error(uploadData.error || "Upload failed");
+      }
+
+      // Save file metadata to DB
+      const recordRes = await saveFileRecord(roomId, uploadData.fileName, uploadData.fileUrl);
+      
+      if (recordRes.error) {
+        throw new Error(recordRes.error);
+      }
+
+      // Reset form on success
+      (e.target as HTMLFormElement).reset();
+    } catch (err: any) {
+      setUploadError(err.message || "An unexpected error occurred");
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const handleDeleteFile = async (fileId: string) => {
     if (confirm("Are you sure you want to delete this file?")) {
@@ -96,29 +143,42 @@ export default function RoomView({
         
         {/* Main Content (Files) */}
         <div className="lg:col-span-3 space-y-6">
-          <div className="flex items-center justify-between border-b border-border pb-4">
-            <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
-              <Folder className="w-5 h-5 text-primary" />
-              Study Materials
-            </h2>
+          <div className="flex flex-col gap-4 border-b border-border pb-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+                <Folder className="w-5 h-5 text-primary" />
+                Study Materials
+              </h2>
+              
+              {(role === 'owner' || role === 'editor') && (
+                <form onSubmit={handleUpload} className="flex gap-2 items-center">
+                  <input 
+                    type="file" 
+                    name="file" 
+                    required
+                    disabled={isUploading}
+                    className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 transition-colors file:cursor-pointer file:disabled:opacity-50 disabled:opacity-50 cursor-pointer"
+                  />
+                  <button 
+                    type="submit"
+                    disabled={isUploading}
+                    className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md transition-colors disabled:opacity-50 whitespace-nowrap"
+                  >
+                    {isUploading ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Upload className="w-4 h-4 mr-2" />
+                    )}
+                    {isUploading ? "Uploading..." : "Upload"}
+                  </button>
+                </form>
+              )}
+            </div>
             
-            {(role === 'owner' || role === 'editor') && (
-              <form action={uploadAction} className="flex gap-2">
-                <input 
-                  type="text" 
-                  name="fileName" 
-                  placeholder="File name (mock)" 
-                  required
-                  className="px-3 py-1.5 text-sm border border-input rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-primary"
-                />
-                <button 
-                  type="submit"
-                  className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md transition-colors"
-                >
-                  <Upload className="w-4 h-4 mr-2" />
-                  Upload
-                </button>
-              </form>
+            {uploadError && (
+              <div className="text-sm text-destructive bg-destructive/10 p-2 rounded-md font-medium">
+                {uploadError}
+              </div>
             )}
           </div>
 
@@ -140,12 +200,23 @@ export default function RoomView({
                     </div>
                     
                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="p-2 text-muted-foreground hover:text-foreground hover:bg-background rounded-md transition-colors" title="Preview">
+                      <a 
+                        href={file.url} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="p-2 text-muted-foreground hover:text-foreground hover:bg-background rounded-md transition-colors inline-flex" 
+                        title="Preview"
+                      >
                         <Eye className="w-4 h-4" />
-                      </button>
-                      <button className="p-2 text-muted-foreground hover:text-primary hover:bg-background rounded-md transition-colors" title="Download">
+                      </a>
+                      <a 
+                        href={file.url} 
+                        download={file.name}
+                        className="p-2 text-muted-foreground hover:text-primary hover:bg-background rounded-md transition-colors inline-flex" 
+                        title="Download"
+                      >
                         <Download className="w-4 h-4" />
-                      </button>
+                      </a>
                       {(role === 'owner' || (role === 'editor' && file.uploaderId === currentUserId)) && (
                         <button 
                           onClick={() => handleDeleteFile(file.id)}

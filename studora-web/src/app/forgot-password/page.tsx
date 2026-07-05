@@ -1,7 +1,7 @@
 "use client";
 
 import { KeyRound, Loader2, ArrowLeft } from "lucide-react";
-import { forgetPassword } from "@/lib/auth-client";
+import { requestPasswordReset } from "@/lib/auth-client";
 import { useState } from "react";
 import Link from "next/link";
 
@@ -24,7 +24,7 @@ export default function ForgotPassword() {
     }
 
     try {
-      const { data, error } = await forgetPassword({
+      const { data, error } = await requestPasswordReset({
         email,
         redirectTo: "/reset-password",
       });

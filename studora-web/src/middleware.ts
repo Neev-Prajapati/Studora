@@ -3,7 +3,7 @@ import type { Session } from "better-auth/types";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
-  const { data: session } = await betterFetch<Session>(
+  const { data } = await betterFetch<{ session: Session, user: any }>(
     "/api/auth/get-session",
     {
       baseURL: request.nextUrl.origin,
@@ -15,10 +15,10 @@ export async function middleware(request: NextRequest) {
   );
 
   const { pathname } = request.nextUrl;
-  const isAuthRoute = pathname.startsWith("/login");
+  const isAuthRoute = pathname.startsWith("/login") || pathname.startsWith("/signup") || pathname.startsWith("/forgot-password") || pathname.startsWith("/reset-password");
   const isOnboarding = pathname === "/onboarding";
 
-  if (!session) {
+  if (!data || !data.session) {
     if (!isAuthRoute) {
       return NextResponse.redirect(new URL("/login", request.url));
     }
@@ -26,7 +26,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // If the user is logged in, check if they have a username
-  const hasUsername = (session.user as any).username != null;
+  const hasUsername = data.user?.username != null;
 
   if (!hasUsername && !isOnboarding) {
     return NextResponse.redirect(new URL("/onboarding", request.url));

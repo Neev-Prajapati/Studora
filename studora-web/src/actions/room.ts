@@ -237,7 +237,7 @@ export async function getRoomDetails(roomId: string) {
   }
 }
 
-export async function mockUploadFile(roomId: string, fileName: string, fileUrl: string) {
+export async function saveFileRecord(roomId: string, fileName: string, fileUrl: string) {
   try {
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -258,6 +258,8 @@ export async function mockUploadFile(roomId: string, fileName: string, fileUrl: 
     }
 
     const { file } = await import("@/db/schema");
+    
+    // Insert into file table
     await db.insert(file).values({
       name: fileName,
       url: fileUrl,
@@ -268,7 +270,7 @@ export async function mockUploadFile(roomId: string, fileName: string, fileUrl: 
     revalidatePath(`/rooms/${roomId}`);
     return { success: true };
   } catch (error) {
-    console.error("Upload mock failed:", error);
+    console.error("Save file record failed:", error);
     return { error: "Internal Server Error" };
   }
 }
