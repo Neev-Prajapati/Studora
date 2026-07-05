@@ -7,9 +7,11 @@ import { getUserRooms, getRecentActivity } from "@/actions/room";
 import { getUpcomingDeadlines } from "@/actions/assignment";
 import RoomModals from "@/components/RoomModals";
 import Link from "next/link";
+import { usePreferences } from "@/components/PreferencesProvider";
 
 export default function Dashboard() {
   const { data: session } = useSession();
+  const preferences = usePreferences();
 
   const [rooms, setRooms] = useState<any[]>([]);
   const [deadlines, setDeadlines] = useState<any[]>([]);
@@ -123,7 +125,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* Left Column (Rooms & Activity) */}
-        <div className="lg:col-span-2 space-y-8">
+        <div className={`space-y-8 ${preferences.showUpcomingDeadlines ? "lg:col-span-2" : "lg:col-span-3"}`}>
           
           {/* Study Rooms */}
           <section>
@@ -204,49 +206,52 @@ export default function Dashboard() {
           </section>
 
           {/* Recent Activity */}
-          <section>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
-                <Activity className="h-5 w-5 text-primary" />
-                Recent Activity
-              </h2>
-            </div>
-            <div className="rounded-xl border border-border bg-card overflow-y-auto max-h-[380px] custom-scrollbar">
-              {recentActivity.length === 0 ? (
-                 <div className="p-8 text-center flex flex-col items-center">
-                    <Activity className="h-8 w-8 text-muted-foreground/50 mb-3" />
-                    <p className="text-muted-foreground text-sm">No recent activity to show.</p>
-                 </div>
-              ) : (
-                <ul className="divide-y divide-border">
-                  {recentActivity.map((activity) => (
-                    <li key={activity.id} className="p-4 hover:bg-muted/50 transition-colors cursor-pointer">
-                      <div className="flex space-x-3">
-                        <div className="flex-1 space-y-1">
-                          <div className="flex items-center justify-between">
-                            <p className="text-sm font-medium text-card-foreground">
-                              <span className="text-primary mr-1">{activity.user}</span>
-                              <span className="text-muted-foreground font-normal">{activity.action}</span>
-                              <span className="ml-1 font-semibold">{activity.target}</span>
+          {preferences.showRecentActivity && (
+            <section>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+                  <Activity className="h-5 w-5 text-primary" />
+                  Recent Activity
+                </h2>
+              </div>
+              <div className="rounded-xl border border-border bg-card overflow-y-auto max-h-[380px] custom-scrollbar">
+                {recentActivity.length === 0 ? (
+                   <div className="p-8 text-center flex flex-col items-center">
+                      <Activity className="h-8 w-8 text-muted-foreground/50 mb-3" />
+                      <p className="text-muted-foreground text-sm">No recent activity to show.</p>
+                   </div>
+                ) : (
+                  <ul className="divide-y divide-border">
+                    {recentActivity.map((activity) => (
+                      <li key={activity.id} className="p-4 hover:bg-muted/50 transition-colors cursor-pointer">
+                        <div className="flex space-x-3">
+                          <div className="flex-1 space-y-1">
+                            <div className="flex items-center justify-between">
+                              <p className="text-sm font-medium text-card-foreground">
+                                <span className="text-primary mr-1">{activity.user}</span>
+                                <span className="text-muted-foreground font-normal">{activity.action}</span>
+                                <span className="ml-1 font-semibold">{activity.target}</span>
+                              </p>
+                              <span className="text-xs text-muted-foreground whitespace-nowrap">{activity.time}</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground flex items-center">
+                              In <span className="mx-1 font-medium bg-muted px-1.5 rounded-sm">{activity.subject}</span>
                             </p>
-                            <span className="text-xs text-muted-foreground whitespace-nowrap">{activity.time}</span>
                           </div>
-                          <p className="text-xs text-muted-foreground flex items-center">
-                            In <span className="mx-1 font-medium bg-muted px-1.5 rounded-sm">{activity.subject}</span>
-                          </p>
                         </div>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </section>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </section>
+          )}
 
         </div>
 
         {/* Right Column (Upcoming Deadlines) */}
-        <div className="lg:col-span-1 space-y-8">
+        {preferences.showUpcomingDeadlines && (
+          <div className="lg:col-span-1 space-y-8">
           <section>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
@@ -304,7 +309,8 @@ export default function Dashboard() {
               </div>
             )}
           </section>
-        </div>
+          </div>
+        )}
 
       </div>
     </div>

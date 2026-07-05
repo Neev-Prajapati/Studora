@@ -23,7 +23,7 @@ export default function SignUp() {
     setGoogleLoading(true);
     await signIn.social({
       provider: "google",
-      callbackURL: "/dashboard",
+      callbackURL: "/",
     });
     setGoogleLoading(false);
   };
@@ -51,7 +51,7 @@ export default function SignUp() {
         email,
         password,
         name,
-        callbackURL: "/dashboard",
+        callbackURL: "/",
       });
 
       if (error) {

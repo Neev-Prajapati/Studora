@@ -18,9 +18,12 @@ export async function POST(req: Request) {
     const roomType = (formData.get("roomType") as string) || "study";
     const uploadType = (formData.get("uploadType") as string) || "material";
 
-    if (!file || !roomId) return NextResponse.json({ error: "File and roomId are required" }, { status: 400 });
+    if (!file) return NextResponse.json({ error: "File is required" }, { status: 400 });
 
-    if (roomType === "study") {
+    if (roomType === "profile") {
+      // Profile picture uploads do not require a roomId, they use the user's ID
+    } else if (roomType === "study") {
+      if (!roomId) return NextResponse.json({ error: "roomId is required" }, { status: 400 });
       const membership = await db.select().from(roomMember).where(
         and(eq(roomMember.roomId, roomId), eq(roomMember.userId, session.user.id))
       );
@@ -28,6 +31,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Permission denied" }, { status: 403 });
       }
     } else if (roomType === "assignment") {
+      if (!roomId) return NextResponse.json({ error: "roomId is required" }, { status: 400 });
       const { assignmentRoomMember } = await import("@/db/schema");
       const membership = await db.select().from(assignmentRoomMember).where(
         and(eq(assignmentRoomMember.roomId, roomId), eq(assignmentRoomMember.userId, session.user.id))
@@ -39,10 +43,6 @@ export async function POST(req: Request) {
       if (uploadType === "assignment" && role !== "owner" && role !== "editor") {
         return NextResponse.json({ error: "Permission denied (only owners/editors can create assignments)" }, { status: 403 });
       }
-      if (uploadType === "solution" && role !== "viewer") {
-        // Technically anyone could submit, but normally students (viewers) submit. 
-        // We'll allow owners/editors to submit too for testing.
-      }
     }
 
     const bytes = await file.arrayBuffer();
@@ -50,7 +50,12 @@ export async function POST(req: Request) {
 
     const uniqueId = crypto.randomUUID();
     const extension = file.name.split('.').pop();
-    const s3Key = `${roomId}/${uniqueId}.${extension}`;
+    
+    // Construct S3 key depending on whether it's a room upload or a profile upload
+    const s3Key = roomType === "profile" 
+      ? `avatars/${session.user.id}/${uniqueId}.${extension}`
+      : `${roomId}/${uniqueId}.${extension}`;
+      
     const bucket = process.env.S3_BUCKET_NAME!;
 
     await s3Client.send(new PutObjectCommand({

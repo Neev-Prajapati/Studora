@@ -8,7 +8,9 @@ export const user = pgTable("user", {
 					image: text("image"),
 					createdAt: timestamp("created_at").notNull(),
 					updatedAt: timestamp("updated_at").notNull(),
-     username: text("username").unique(), // Our custom unique handle
+          username: text("username").unique(), // Our custom unique handle
+          emailReminders: boolean("email_reminders").notNull().default(true),
+          emailRoomActivity: boolean("email_room_activity").notNull().default(true),
 });
 
 export const session = pgTable("session", {

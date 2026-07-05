@@ -21,7 +21,7 @@ export default function Login() {
     setGoogleLoading(true);
     await signIn.social({
       provider: "google",
-      callbackURL: "/dashboard",
+      callbackURL: "/",
     });
     setGoogleLoading(false);
   };
@@ -54,13 +54,13 @@ export default function Login() {
       const { data, error } = await signIn.email({
         email: finalEmail,
         password,
-        callbackURL: "/dashboard",
+        callbackURL: "/",
       });
 
       if (error) {
         setError(error.message || "Invalid credentials");
       } else {
-        router.push("/dashboard");
+        router.push("/");
       }
     } catch (err: any) {
       setError("An unexpected error occurred");

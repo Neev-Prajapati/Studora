@@ -15,6 +15,13 @@
       "when": 1783236987826,
       "tag": "0001_fine_lifeguard",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783260243110,
+      "tag": "0002_sleepy_medusa",
+      "breakpoints": true
     }
   ]
 }

@@ -48,7 +48,12 @@ export async function register() {
           
           let targetUsersQuery = db.select({ email: user.email, name: user.name, userId: user.id }).from(assignmentRoomMember)
             .innerJoin(user, eq(assignmentRoomMember.userId, user.id))
-            .where(eq(assignmentRoomMember.roomId, asm.roomId));
+            .where(
+              and(
+                eq(assignmentRoomMember.roomId, asm.roomId),
+                eq(user.emailReminders, true)
+              )
+            );
             
           const targetUsers = await targetUsersQuery;
           const usersToEmail = targetUsers.filter(tu => !submittedUserIds.includes(tu.userId));
@@ -84,7 +89,12 @@ export async function register() {
           
           let targetUsersQuery = db.select({ email: user.email, name: user.name, userId: user.id }).from(assignmentRoomMember)
             .innerJoin(user, eq(assignmentRoomMember.userId, user.id))
-            .where(eq(assignmentRoomMember.roomId, asm.roomId));
+            .where(
+              and(
+                eq(assignmentRoomMember.roomId, asm.roomId),
+                eq(user.emailReminders, true)
+              )
+            );
             
           const targetUsers = await targetUsersQuery;
           const usersToEmail = targetUsers.filter(tu => !submittedUserIds.includes(tu.userId));

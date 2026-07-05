@@ -17,6 +17,45 @@ function generateInviteCode() {
   return code;
 }
 
+async function dispatchAssignmentActivityEmail(roomId: string, actorName: string, actionDesc: string, roomName: string, excludeUserId: string) {
+  try {
+    const { user } = await import("@/db/schema");
+    const targetUsers = await db.select({ email: user.email, userId: user.id }).from(assignmentRoomMember)
+      .innerJoin(user, eq(assignmentRoomMember.userId, user.id))
+      .where(
+        and(
+          eq(assignmentRoomMember.roomId, roomId),
+          eq(user.emailRoomActivity, true)
+        )
+      );
+
+    const emails = targetUsers.filter(u => u.userId !== excludeUserId).map(u => u.email);
+    if (emails.length === 0) return;
+
+    const nodemailer = await import("nodemailer");
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+
+    for (const to of emails) {
+      await transporter.sendMail({
+        from: process.env.SMTP_USER,
+        to,
+        subject: `Studora Activity: ${roomName}`,
+        text: `${actorName} ${actionDesc} in room "${roomName}".\n\nLog in to Studora to see the latest updates.\n\nBest,\nStudora Team`
+      }).catch(console.error);
+    }
+  } catch (error) {
+    console.error("Failed to dispatch activity email:", error);
+  }
+}
+
 export async function logAssignmentActivity(roomId: string, userId: string, action: string, target?: string) {
   try {
     const roomInfo = await db.select({ name: assignmentRoom.name }).from(assignmentRoom).where(eq(assignmentRoom.id, roomId));
@@ -109,6 +148,8 @@ export async function joinAssignmentRoom(inviteCode: string) {
     });
 
     await logAssignmentActivity(roomId, session.user.id, "joined the assignment room");
+    
+    dispatchAssignmentActivityEmail(roomId, session.user.name, "joined the assignment room", targetRoom[0].name, session.user.id);
 
     revalidatePath("/assignments");
     return { success: true, roomId };
@@ -255,6 +296,11 @@ export async function submitAssignmentSolutionAction(assignmentId: string, roomI
     });
 
     await logAssignmentActivity(roomId, session.user.id, "submitted a solution for", fileName);
+
+    const roomInfo = await db.select({ name: assignmentRoom.name }).from(assignmentRoom).where(eq(assignmentRoom.id, roomId));
+    const roomName = roomInfo.length > 0 ? roomInfo[0].name : "Unknown Room";
+    
+    dispatchAssignmentActivityEmail(roomId, session.user.name, `submitted a solution for "${fileName}"`, roomName, session.user.id);
 
     revalidatePath(`/assignments/${roomId}`);
     return { success: true };

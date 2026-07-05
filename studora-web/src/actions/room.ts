@@ -17,6 +17,45 @@ function generateInviteCode() {
   return code;
 }
 
+async function dispatchRoomActivityEmail(roomId: string, actorName: string, actionDesc: string, roomName: string, excludeUserId: string) {
+  try {
+    const { user } = await import("@/db/schema");
+    const targetUsers = await db.select({ email: user.email, userId: user.id }).from(roomMember)
+      .innerJoin(user, eq(roomMember.userId, user.id))
+      .where(
+        and(
+          eq(roomMember.roomId, roomId),
+          eq(user.emailRoomActivity, true)
+        )
+      );
+
+    const emails = targetUsers.filter(u => u.userId !== excludeUserId).map(u => u.email);
+    if (emails.length === 0) return;
+
+    const nodemailer = await import("nodemailer");
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+
+    for (const to of emails) {
+      await transporter.sendMail({
+        from: process.env.SMTP_USER,
+        to,
+        subject: `Studora Activity: ${roomName}`,
+        text: `${actorName} ${actionDesc} in room "${roomName}".\n\nLog in to Studora to see the latest updates.\n\nBest,\nStudora Team`
+      }).catch(console.error);
+    }
+  } catch (error) {
+    console.error("Failed to dispatch activity email:", error);
+  }
+}
+
 export async function logActivity(roomId: string, userId: string, action: string, target?: string) {
   try {
     const roomInfo = await db.select({ name: room.name }).from(room).where(eq(room.id, roomId));
@@ -142,6 +181,9 @@ export async function joinRoom(inviteCode: string) {
     });
 
     await logActivity(roomId, session.user.id, "joined the room");
+    
+    // Dispatch email
+    dispatchRoomActivityEmail(roomId, session.user.name, "joined the room", targetRoom[0].name, session.user.id);
 
     revalidatePath("/dashboard");
     return { success: true, roomId };
@@ -290,6 +332,13 @@ export async function saveFileRecord(roomId: string, fileName: string, fileUrl: 
     });
 
     await logActivity(roomId, session.user.id, "uploaded file", fileName);
+
+    // Fetch room name for email
+    const roomInfo = await db.select({ name: room.name }).from(room).where(eq(room.id, roomId));
+    const roomName = roomInfo.length > 0 ? roomInfo[0].name : "Unknown Room";
+    
+    // Dispatch email
+    dispatchRoomActivityEmail(roomId, session.user.name, `uploaded a new file "${fileName}"`, roomName, session.user.id);
 
     revalidatePath(`/rooms/${roomId}`);
     return { success: true };

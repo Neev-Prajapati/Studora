@@ -1,14 +1,23 @@
 "use client";
 
-import { Bell, User, LogOut } from "lucide-react";
+import { Bell, User, LogOut, Edit2 } from "lucide-react";
 import { useSession, signOut } from "@/lib/auth-client";
 import { useState } from "react";
+import EditUsernameModal from "./EditUsernameModal";
 
 export default function TopNav() {
   const { data: session } = useSession();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isEditUsernameOpen, setIsEditUsernameOpen] = useState(false);
+  const currentUsername = session?.user?.name ? ((session.user as any).username ? `${(session.user as any).username}` : session.user.name.split(" ")[0]) : "";
 
   return (
+    <>
+    <EditUsernameModal 
+      isOpen={isEditUsernameOpen} 
+      onClose={() => setIsEditUsernameOpen(false)} 
+      currentUsername={currentUsername}
+    />
     <header className="h-16 flex-shrink-0 bg-background border-b border-border flex items-center justify-between px-6">
       <div className="flex-1 flex items-center">
         {/* Removed Search Bar */}
@@ -36,10 +45,20 @@ export default function TopNav() {
           
           {isDropdownOpen && (
             <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-md shadow-lg z-50 animate-in fade-in zoom-in-95 duration-100">
-              <div className="px-4 py-3 border-b border-border">
+              <div className="px-4 py-3 border-b border-border flex items-center justify-between">
                 <p className="text-sm font-medium text-foreground truncate">
-                  {session?.user?.name ? ((session.user as any).username ? `@${(session.user as any).username}` : session.user.name.split(" ")[0]) : "User"}
+                  {currentUsername ? `@${currentUsername}` : "User"}
                 </p>
+                <button 
+                  onClick={() => {
+                    setIsDropdownOpen(false);
+                    setIsEditUsernameOpen(true);
+                  }}
+                  className="p-1 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                  title="Edit Username"
+                >
+                  <Edit2 className="w-3.5 h-3.5" />
+                </button>
               </div>
               <div className="p-1">
                 <button
@@ -58,5 +77,6 @@ export default function TopNav() {
         </div>
       </div>
     </header>
+    </>
   );
 }

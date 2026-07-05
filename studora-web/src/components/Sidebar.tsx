@@ -17,33 +17,40 @@ export default function Sidebar() {
       <div className="flex-1 py-6 px-4 space-y-1">
         <Link 
           href="/dashboard" 
-          className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+          className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
             pathname === '/dashboard' || pathname.startsWith('/rooms')
-              ? 'bg-sidebar-accent text-sidebar-accent-foreground' 
-              : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
+              ? 'bg-primary/15 text-primary' 
+              : 'text-sidebar-foreground hover:bg-primary/10 hover:text-primary'
           }`}
         >
-          <Home className={`h-5 w-5 mr-3 ${pathname === '/dashboard' || pathname.startsWith('/rooms') ? 'text-primary' : 'text-muted-foreground'}`} />
+          <Home className={`h-5 w-5 mr-3 transition-colors ${pathname === '/dashboard' || pathname.startsWith('/rooms') ? 'text-primary' : 'text-muted-foreground group-hover:text-primary'}`} />
           Dashboard
         </Link>
         <Link 
           href="/assignments" 
-          className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+          className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
             pathname.startsWith('/assignments')
-              ? 'bg-sidebar-accent text-sidebar-accent-foreground' 
-              : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
+              ? 'bg-primary/15 text-primary' 
+              : 'text-sidebar-foreground hover:bg-primary/10 hover:text-primary'
           }`}
         >
-          <CheckSquare className={`h-5 w-5 mr-3 ${pathname.startsWith('/assignments') ? 'text-primary' : 'text-muted-foreground'}`} />
+          <CheckSquare className={`h-5 w-5 mr-3 transition-colors ${pathname.startsWith('/assignments') ? 'text-primary' : 'text-muted-foreground group-hover:text-primary'}`} />
           Assignments
         </Link>
       </div>
 
       <div className="p-4 border-t border-sidebar-border">
-        <a href="#" className="flex items-center px-3 py-2 text-sm font-medium rounded-md text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground transition-colors">
-          <Settings className="h-5 w-5 mr-3 text-muted-foreground" />
+        <Link 
+          href="/settings" 
+          className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+            pathname.startsWith('/settings')
+              ? 'bg-primary/15 text-primary' 
+              : 'text-sidebar-foreground hover:bg-primary/10 hover:text-primary'
+          }`}
+        >
+          <Settings className={`h-5 w-5 mr-3 transition-colors ${pathname.startsWith('/settings') ? 'text-primary' : 'text-muted-foreground group-hover:text-primary'}`} />
           Settings
-        </a>
+        </Link>
       </div>
     </aside>
   );
