@@ -190,19 +190,12 @@ export async function getAssignmentRoomDetails(roomId: string) {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session || !session.user) return { error: "Unauthorized" };
 
-    const roomInfo = await db.select().from(assignmentRoom).where(eq(assignmentRoom.id, roomId));
-    if (roomInfo.length === 0) return { error: "Room not found" };
-
-    const membership = await db.select().from(assignmentRoomMember).where(
-      and(eq(assignmentRoomMember.roomId, roomId), eq(assignmentRoomMember.userId, session.user.id))
-    );
-
-    if (membership.length === 0) return { error: "You are not a member of this room" };
-
-    const role = membership[0].role;
-
-    const members = await db
-      .select({
+    const [roomInfo, membership, members, assignments] = await Promise.all([
+      db.select().from(assignmentRoom).where(eq(assignmentRoom.id, roomId)),
+      db.select().from(assignmentRoomMember).where(
+        and(eq(assignmentRoomMember.roomId, roomId), eq(assignmentRoomMember.userId, session.user.id))
+      ),
+      db.select({
         userId: assignmentRoomMember.userId,
         role: assignmentRoomMember.role,
         joinedAt: assignmentRoomMember.joinedAt,
@@ -212,10 +205,8 @@ export async function getAssignmentRoomDetails(roomId: string) {
       })
       .from(assignmentRoomMember)
       .innerJoin(user, eq(assignmentRoomMember.userId, user.id))
-      .where(eq(assignmentRoomMember.roomId, roomId));
-
-    const assignments = await db
-      .select({
+      .where(eq(assignmentRoomMember.roomId, roomId)),
+      db.select({
         id: assignment.id,
         title: assignment.title,
         description: assignment.description,
@@ -229,7 +220,13 @@ export async function getAssignmentRoomDetails(roomId: string) {
       .from(assignment)
       .innerJoin(user, eq(assignment.createdBy, user.id))
       .where(eq(assignment.roomId, roomId))
-      .orderBy(desc(assignment.createdAt));
+      .orderBy(desc(assignment.createdAt))
+    ]);
+
+    if (roomInfo.length === 0) return { error: "Room not found" };
+    if (membership.length === 0) return { error: "You are not a member of this room" };
+
+    const role = membership[0].role;
 
     return { success: true, room: roomInfo[0], role, members, assignments };
   } catch (error) {

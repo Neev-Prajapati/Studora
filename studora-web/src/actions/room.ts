@@ -238,31 +238,18 @@ export async function getRoomDetails(roomId: string) {
       return { error: "Unauthorized" };
     }
 
-    // 1. Fetch Room Info
-    const roomInfo = await db.select().from(room).where(eq(room.id, roomId));
-    if (roomInfo.length === 0) {
-      return { error: "Room not found" };
-    }
-
-    // 2. Fetch User's Role in this Room (Verify Membership)
-    const membership = await db.select().from(roomMember).where(
-      and(
-        eq(roomMember.roomId, roomId),
-        eq(roomMember.userId, session.user.id)
-      )
-    );
-
-    if (membership.length === 0) {
-      return { error: "You are not a member of this room" };
-    }
-
-    const role = membership[0].role;
-
-    // 3. Fetch Files for this Room (Mocking for now, but we fetch from DB)
-    // We'll join with the user table to get the uploader's name
     const { user, file } = await import("@/db/schema");
-    const roomFiles = await db
-      .select({
+    
+    // Run all 4 queries in parallel to drastically improve load time
+    const [roomInfo, membership, roomFiles, members] = await Promise.all([
+      db.select().from(room).where(eq(room.id, roomId)),
+      db.select().from(roomMember).where(
+        and(
+          eq(roomMember.roomId, roomId),
+          eq(roomMember.userId, session.user.id)
+        )
+      ),
+      db.select({
         id: file.id,
         name: file.name,
         url: file.url,
@@ -272,11 +259,8 @@ export async function getRoomDetails(roomId: string) {
       })
       .from(file)
       .innerJoin(user, eq(file.uploadedBy, user.id))
-      .where(eq(file.roomId, roomId));
-
-    // 4. Fetch Members for this Room
-    const members = await db
-      .select({
+      .where(eq(file.roomId, roomId)),
+      db.select({
         userId: roomMember.userId,
         role: roomMember.role,
         joinedAt: roomMember.joinedAt,
@@ -286,7 +270,18 @@ export async function getRoomDetails(roomId: string) {
       })
       .from(roomMember)
       .innerJoin(user, eq(roomMember.userId, user.id))
-      .where(eq(roomMember.roomId, roomId));
+      .where(eq(roomMember.roomId, roomId))
+    ]);
+
+    if (roomInfo.length === 0) {
+      return { error: "Room not found" };
+    }
+
+    if (membership.length === 0) {
+      return { error: "You are not a member of this room" };
+    }
+
+    const role = membership[0].role;
 
     return {
       success: true,
