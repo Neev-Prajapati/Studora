@@ -121,11 +121,13 @@ Be helpful, concise, and format your answers nicely with markdown (e.g., bullet 
       if (content?.inlineData) contextParts.push({ inlineData: content.inlineData });
     }
 
+    let firstUserMsgIndex = messages.findIndex((m: any) => m.role === 'user');
+
     const formattedHistory = messages.map((msg: { role: string; content: string }, index: number) => {
-      let parts = [{ text: msg.content }];
+      let parts: any[] = [{ text: msg.content }];
       
-      // If this is the very first user message in the conversation, prepend the document context to it
-      if (index === 0 && msg.role === 'user') {
+      // Prepend document context to the very first user message
+      if (index === firstUserMsgIndex) {
         parts = [...contextParts, ...parts];
       }
 
@@ -142,7 +144,7 @@ Be helpful, concise, and format your answers nicely with markdown (e.g., bullet 
     console.log(`[AI Chat] Requesting completion from Gemini with ${validFileContents.length} documents...`);
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-lite',
+      model: 'gemini-2.5-flash',
       contents: formattedHistory,
       config: {
         temperature: 0.4,
