@@ -131,7 +131,7 @@ Be helpful, concise, and format your answers nicely with markdown (e.g., bullet 
     console.log(`[AI Chat] Requesting completion from Gemini with ${validFileContents.length} documents...`);
 
     const response = await ai.models.generateContent({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.5-flash-lite',
       contents: formattedHistory,
       config: {
         temperature: 0.4,
