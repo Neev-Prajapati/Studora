@@ -140,7 +140,7 @@ export default function AssignmentRoomView({
         transition={{ duration: 0.2 }}
         draggable={!isCompleted}
         onDragStart={(e: any) => handleDragStart(e, assignment.id)}
-        onDragEnd={handleDragEnd}
+        onDragEnd={(e: any) => handleDragEnd(e)}
         className={`rounded-xl border border-border bg-card p-4 group transition-colors shadow-sm mb-4
           ${!isCompleted ? "cursor-grab active:cursor-grabbing hover:border-primary/50" : "opacity-80"}`}
       >
@@ -353,7 +353,7 @@ export default function AssignmentRoomView({
                 <span className="text-xs font-medium bg-muted px-2 py-1 rounded-md text-muted-foreground">{todoAssignments.length}</span>
               </div>
               <AnimatePresence>
-                {todoAssignments.map(a => <div key={a.id}>{renderKanbanCard(a, "todo")}</div>)}
+                {todoAssignments.map((a: any) => <div key={a.id}>{renderKanbanCard(a, "todo")}</div>)}
               </AnimatePresence>
               {todoAssignments.length === 0 && (
                 <div className="flex-1 flex items-center justify-center border-2 border-dashed border-border/50 rounded-xl p-8 text-center">
@@ -375,7 +375,7 @@ export default function AssignmentRoomView({
                 <span className="text-xs font-medium bg-primary/10 text-primary px-2 py-1 rounded-md">{inProgressAssignments.length}</span>
               </div>
               <AnimatePresence>
-                {inProgressAssignments.map(a => <div key={a.id}>{renderKanbanCard(a, "in_progress")}</div>)}
+                {inProgressAssignments.map((a: any) => <div key={a.id}>{renderKanbanCard(a, "in_progress")}</div>)}
               </AnimatePresence>
               {inProgressAssignments.length === 0 && (
                 <div className="flex-1 flex items-center justify-center border-2 border-dashed border-border/50 rounded-xl p-8 text-center">
@@ -397,7 +397,7 @@ export default function AssignmentRoomView({
                 <span className="text-xs font-medium bg-green-500/10 text-green-500 px-2 py-1 rounded-md">{completedAssignments.length}</span>
               </div>
               <AnimatePresence>
-                {completedAssignments.map(a => <div key={a.id}>{renderKanbanCard(a, "completed")}</div>)}
+                {completedAssignments.map((a: any) => <div key={a.id}>{renderKanbanCard(a, "completed")}</div>)}
               </AnimatePresence>
               {completedAssignments.length === 0 && (
                 <div className="flex-1 flex items-center justify-center border-2 border-dashed border-border/50 rounded-xl p-8 text-center">
