@@ -83,6 +83,7 @@ export async function POST(req: Request) {
       else if (extName.endsWith(".jpg") || extName.endsWith(".jpeg")) mimeType = "image/jpeg";
       
       if (extractedText) {
+        if (extractedText.length > 50000) extractedText = extractedText.substring(0, 50000) + "\n...[Content Truncated]...";
         const result = { text: `--- Document: ${fileName} ---\n${extractedText}` };
         fileCache.set(fileUrl, result);
         parts.unshift({ text: "Document Content:\n" + result.text });
@@ -107,6 +108,21 @@ export async function POST(req: Request) {
       config: {
         temperature: 0.2,
         responseMimeType: "application/json",
+        responseSchema: {
+          type: "ARRAY",
+          items: {
+            type: "OBJECT",
+            properties: {
+              question: { type: "STRING" },
+              options: { 
+                type: "ARRAY", 
+                items: { type: "STRING" } 
+              },
+              correctAnswer: { type: "STRING" }
+            },
+            required: ["question", "options", "correctAnswer"]
+          }
+        }
       }
     });
 

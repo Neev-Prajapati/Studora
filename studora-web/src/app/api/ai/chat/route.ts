@@ -83,6 +83,7 @@ export async function POST(req: Request) {
         }
 
         if (extractedText) {
+          if (extractedText.length > 50000) extractedText = extractedText.substring(0, 50000) + "\n...[Content Truncated]...";
           const result = { text: `--- Document: ${f.name} ---\n${extractedText}` };
           fileCache.set(f.url, result);
           return result;

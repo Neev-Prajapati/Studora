@@ -89,6 +89,7 @@ export async function POST(req: Request) {
       }
 
       if (extractedText) {
+        if (extractedText.length > 50000) extractedText = extractedText.substring(0, 50000) + "\n...[Content Truncated]...";
         const result = { text: `--- Document: ${fileName} ---\n${extractedText}` };
         fileCache.set(fileUrl, result);
         parts.unshift({ text: "Document Content:\n" + result.text });
@@ -111,8 +112,19 @@ export async function POST(req: Request) {
         }
       ],
       config: {
-        temperature: 0.8,
+        temperature: 0.4,
         responseMimeType: "application/json",
+        responseSchema: {
+          type: "ARRAY",
+          items: {
+            type: "OBJECT",
+            properties: {
+              front: { type: "STRING" },
+              back: { type: "STRING" }
+            },
+            required: ["front", "back"]
+          }
+        }
       }
     });
 
