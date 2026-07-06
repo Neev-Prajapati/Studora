@@ -190,7 +190,7 @@ export async function getAssignmentRoomDetails(roomId: string) {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session || !session.user) return { error: "Unauthorized" };
 
-    const [roomInfo, membership, members, assignments] = await Promise.all([
+    const [roomInfo, membership, members, assignments, submissionsData] = await Promise.all([
       db.select().from(assignmentRoom).where(eq(assignmentRoom.id, roomId)),
       db.select().from(assignmentRoomMember).where(
         and(eq(assignmentRoomMember.roomId, roomId), eq(assignmentRoomMember.userId, session.user.id))
@@ -220,15 +220,20 @@ export async function getAssignmentRoomDetails(roomId: string) {
       .from(assignment)
       .innerJoin(user, eq(assignment.createdBy, user.id))
       .where(eq(assignment.roomId, roomId))
-      .orderBy(desc(assignment.createdAt))
+      .orderBy(desc(assignment.createdAt)),
+      db.select({ assignmentId: assignmentSubmission.assignmentId })
+      .from(assignmentSubmission)
+      .innerJoin(assignment, eq(assignmentSubmission.assignmentId, assignment.id))
+      .where(and(eq(assignmentSubmission.userId, session.user.id), eq(assignment.roomId, roomId)))
     ]);
 
     if (roomInfo.length === 0) return { error: "Room not found" };
     if (membership.length === 0) return { error: "You are not a member of this room" };
 
     const role = membership[0].role;
+    const submittedAssignmentIds = submissionsData.map(s => s.assignmentId);
 
-    return { success: true, room: roomInfo[0], role, members, assignments };
+    return { success: true, room: roomInfo[0], role, members, assignments, submittedAssignmentIds };
   } catch (error) {
     console.error("Failed to fetch room details:", error);
     return { error: "Internal Server Error" };

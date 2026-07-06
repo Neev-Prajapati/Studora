@@ -16,7 +16,7 @@ export default async function AssignmentRoomPage({ params }: { params: Promise<{
     notFound();
   }
 
-  const { room, role, members, assignments } = res;
+  const { room, role, members, assignments, submittedAssignmentIds } = res;
 
   const session = await auth.api.getSession({ headers: await headers() });
   const currentUserId = session?.user?.id;
@@ -30,6 +30,7 @@ export default async function AssignmentRoomPage({ params }: { params: Promise<{
       role={role}
       members={members}
       assignments={assignments}
+      submittedAssignmentIds={submittedAssignmentIds}
       currentUserId={currentUserId}
     />
   );
