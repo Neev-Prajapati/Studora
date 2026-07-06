@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Folder, Users, Settings, Upload, FileText, Download, Eye, Trash2, ArrowLeft, MoreVertical, Loader2, Copy, Check } from "lucide-react";
+import { Folder, Users, Settings, Upload, FileText, Download, Eye, Trash2, ArrowLeft, MoreVertical, Loader2, Copy, Check, BrainCircuit } from "lucide-react";
 import Link from "next/link";
 import RoomSettingsModal from "./RoomSettingsModal";
 import FilePreviewModal from "./FilePreviewModal";
+import QuizModal from "./QuizModal";
 import { deleteFileAction, updateMemberRole, removeMember, saveFileRecord } from "@/actions/room";
 import { useRouter } from "next/navigation";
 
@@ -23,6 +24,12 @@ export default function RoomView({
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [previewFile, setPreviewFile] = useState<{url: string, name: string} | null>(null);
   const [copied, setCopied] = useState(false);
+  
+  // Quiz state
+  const [activeQuiz, setActiveQuiz] = useState<any[] | null>(null);
+  const [quizFileName, setQuizFileName] = useState("");
+  const [generatingQuizId, setGeneratingQuizId] = useState<string | null>(null);
+  const [quizError, setQuizError] = useState("");
 
   const copyCode = (code: string) => {
     navigator.clipboard.writeText(code);
@@ -93,6 +100,31 @@ export default function RoomView({
     if (confirm("Are you sure you want to remove this member?")) {
       await removeMember(roomId, targetId);
       setActiveDropdown(null);
+    }
+  };
+
+  const handleGenerateQuiz = async (fileUrl: string, fileName: string, fileId: string) => {
+    try {
+      setGeneratingQuizId(fileId);
+      setQuizError("");
+      
+      const res = await fetch("/api/ai/quiz", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileUrl, fileName })
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok) throw new Error(data.error || "Failed to generate quiz");
+      
+      setActiveQuiz(data.quiz);
+      setQuizFileName(fileName);
+    } catch (err: any) {
+      setQuizError(err.message || "An unexpected error occurred");
+      alert(err.message || "Failed to generate quiz");
+    } finally {
+      setGeneratingQuizId(null);
     }
   };
 
@@ -228,6 +260,20 @@ export default function RoomView({
                       >
                         <Eye className="w-4 h-4" />
                       </button>
+                      
+                      <button 
+                        onClick={() => handleGenerateQuiz(file.url, file.name, file.id)}
+                        disabled={generatingQuizId === file.id}
+                        className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-colors inline-flex disabled:opacity-50" 
+                        title="Generate AI Quiz"
+                      >
+                        {generatingQuizId === file.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <BrainCircuit className="w-4 h-4" />
+                        )}
+                      </button>
+
                       <a 
                         href={file.url} 
                         download={file.name}
@@ -339,6 +385,15 @@ export default function RoomView({
         </div>
 
       </div>
+
+      {/* Quiz Modal */}
+      <QuizModal 
+        isOpen={!!activeQuiz} 
+        onClose={() => setActiveQuiz(null)} 
+        quiz={activeQuiz || []} 
+        fileName={quizFileName} 
+      />
+
     </div>
   );
 }
