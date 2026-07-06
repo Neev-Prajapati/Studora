@@ -35,18 +35,19 @@ export default function FilePreviewModal({
       const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (saved) {
         try {
-          setExcalidrawInitialData(JSON.parse(saved));
+          const parsed = JSON.parse(saved);
+          setExcalidrawInitialData({ elements: parsed.elements || [] });
         } catch (e) {
-          setExcalidrawInitialData({ elements: [], appState: {} });
+          setExcalidrawInitialData({ elements: [] });
         }
       } else {
-        setExcalidrawInitialData({ elements: [], appState: {} });
+        setExcalidrawInitialData({ elements: [] });
       }
     }
   }, [isSplitView, LOCAL_STORAGE_KEY]);
 
   const handleExcalidrawChange = (elements: readonly any[], appState: any, files: any) => {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({ elements, appState, files }));
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({ elements }));
   };
 
   // Close on Escape key
