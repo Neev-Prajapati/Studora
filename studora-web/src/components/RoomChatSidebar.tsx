@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { X, Send, Bot, User, Loader2, Sparkles } from "lucide-react";
+import ReactMarkdown from 'react-markdown';
 
 interface Message {
   role: 'user' | 'model';
@@ -89,7 +90,7 @@ export default function RoomChatSidebar({ isOpen, onClose, roomId }: RoomChatSid
       />
       
       {/* Sidebar */}
-      <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-[400px] bg-card border-l border-border shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+      <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-[500px] lg:w-[600px] bg-card border-l border-border shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
         
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border bg-muted/30">
@@ -117,21 +118,18 @@ export default function RoomChatSidebar({ isOpen, onClose, roomId }: RoomChatSid
               }`}>
                 {msg.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
               </div>
-              <div className={`max-w-[80%] rounded-2xl p-3 text-sm break-words ${
+              <div className={`max-w-[85%] rounded-2xl p-4 text-sm break-words ${
                 msg.role === 'user' 
                   ? 'bg-primary text-primary-foreground' 
                   : 'bg-muted text-foreground'
               }`}>
-                {msg.content.split('\\n').map((line, i) => (
-                  <p key={i} className="mb-1 last:mb-0">
-                    {/* Basic markdown bold parsing for **text** */}
-                    {line.split(/(\*\*.*?\*\*)/g).map((part, j) => 
-                      part.startsWith('**') && part.endsWith('**') 
-                        ? <strong key={j}>{part.slice(2, -2)}</strong> 
-                        : <span key={j}>{part}</span>
-                    )}
-                  </p>
-                ))}
+                {msg.role === 'user' ? (
+                  msg.content
+                ) : (
+                  <div className="prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:bg-background/50 prose-pre:border prose-pre:border-border">
+                    <ReactMarkdown>{msg.content}</ReactMarkdown>
+                  </div>
+                )}
               </div>
             </div>
           ))}
