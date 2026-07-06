@@ -131,7 +131,7 @@ Be helpful, concise, and format your answers nicely with markdown (e.g., bullet 
     console.log(`[AI Chat] Requesting completion from Gemini with ${validFileContents.length} documents...`);
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-lite',
+      model: 'gemini-flash-latest',
       contents: formattedHistory,
       config: {
         temperature: 0.4,
@@ -145,7 +145,22 @@ Be helpful, concise, and format your answers nicely with markdown (e.g., bullet 
     
   } catch (error: unknown) {
     console.error("[AI Chat Route Error]", error);
-    const errorMessage = error instanceof Error ? error.message : "Internal server error";
+    let errorMessage = "Internal server error";
+    if (error instanceof Error) {
+      try {
+        const parsed = JSON.parse(error.message);
+        if (parsed.error && parsed.error.message) {
+          errorMessage = parsed.error.message;
+          if (parsed.error.code === 503) {
+            errorMessage = "The AI servers are currently experiencing very high demand. Please wait a few seconds and try again.";
+          }
+        } else {
+          errorMessage = error.message;
+        }
+      } catch {
+        errorMessage = error.message;
+      }
+    }
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
