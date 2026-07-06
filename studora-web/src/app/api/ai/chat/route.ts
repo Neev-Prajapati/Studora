@@ -122,12 +122,19 @@ Be helpful, concise, and format your answers nicely with markdown (e.g., bullet 
     }
 
     let firstUserMsgIndex = messages.findIndex((m: any) => m.role === 'user');
+    if (firstUserMsgIndex === -1) {
+       return NextResponse.json({ error: "No user messages provided" }, { status: 400 });
+    }
 
-    const formattedHistory = messages.map((msg: { role: string; content: string }, index: number) => {
+    // Gemini requires the first message in the history to be a 'user' message!
+    // If the frontend sends a 'model' greeting first, we must strip it out.
+    let validMessages = messages.slice(firstUserMsgIndex);
+
+    const formattedHistory = validMessages.map((msg: { role: string; content: string }, index: number) => {
       let parts: any[] = [{ text: msg.content }];
       
       // Prepend document context to the very first user message
-      if (index === firstUserMsgIndex) {
+      if (index === 0) {
         parts = [...contextParts, ...parts];
       }
 
@@ -143,13 +150,30 @@ Be helpful, concise, and format your answers nicely with markdown (e.g., bullet 
 
     console.log(`[AI Chat] Requesting completion from Gemini with ${validFileContents.length} documents...`);
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: formattedHistory,
-      config: {
-        temperature: 0.4,
+    let response;
+    try {
+      response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: formattedHistory,
+        config: {
+          temperature: 0.4,
+        }
+      });
+    } catch (apiError: any) {
+      if (apiError.message?.includes("503")) {
+        console.log("[AI Chat] Caught 503, retrying once...");
+        await new Promise(r => setTimeout(r, 2000));
+        response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: formattedHistory,
+          config: {
+            temperature: 0.4,
+          }
+        });
+      } else {
+        throw apiError;
       }
-    });
+    }
 
     return NextResponse.json({ 
       success: true, 

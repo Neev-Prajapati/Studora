@@ -97,34 +97,66 @@ export async function POST(req: Request) {
       }
     }
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-lite',
-      contents: [
-        {
-          role: "user",
-          parts: parts
-        }
-      ],
-      config: {
-        temperature: 0.2,
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: "ARRAY",
-          items: {
-            type: "OBJECT",
-            properties: {
-              question: { type: "STRING" },
-              options: { 
-                type: "ARRAY", 
-                items: { type: "STRING" } 
+    let response;
+    try {
+      response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: [
+          {
+            role: "user",
+            parts: parts
+          }
+        ],
+        config: {
+          temperature: 0.2,
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "ARRAY",
+            items: {
+              type: "OBJECT",
+              properties: {
+                question: { type: "STRING" },
+                options: { type: "ARRAY", items: { type: "STRING" } },
+                correctAnswer: { type: "STRING" }
               },
-              correctAnswer: { type: "STRING" }
-            },
-            required: ["question", "options", "correctAnswer"]
+              required: ["question", "options", "correctAnswer"]
+            }
           }
         }
+      });
+    } catch (apiError: any) {
+      if (apiError.message?.includes("503") || apiError.message?.includes("429")) {
+        console.log("[AI Quiz] Caught 503/429, retrying once...");
+        await new Promise(r => setTimeout(r, 2000));
+        response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: [
+            {
+              role: "user",
+              parts: parts
+            }
+          ],
+          config: {
+            temperature: 0.2,
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: "ARRAY",
+              items: {
+                type: "OBJECT",
+                properties: {
+                  question: { type: "STRING" },
+                  options: { type: "ARRAY", items: { type: "STRING" } },
+                  correctAnswer: { type: "STRING" }
+                },
+                required: ["question", "options", "correctAnswer"]
+              }
+            }
+          }
+        });
+      } else {
+        throw apiError;
       }
-    });
+    }
 
     const output = response.text || "";
     let cleanOutput = output.trim();
