@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Folder, Users, Settings, Upload, FileText, Download, Eye, Trash2, ArrowLeft, MoreVertical, Loader2, Copy, Check, BrainCircuit } from "lucide-react";
+import { Folder, Users, Settings, Upload, FileText, Download, Eye, Trash2, ArrowLeft, MoreVertical, Loader2, Copy, Check, BrainCircuit, Sparkles } from "lucide-react";
 import Link from "next/link";
 import RoomSettingsModal from "./RoomSettingsModal";
 import FilePreviewModal from "./FilePreviewModal";
 import QuizModal from "./QuizModal";
+import RoomChatSidebar from "./RoomChatSidebar";
 import { deleteFileAction, updateMemberRole, removeMember, saveFileRecord } from "@/actions/room";
 import { useRouter } from "next/navigation";
 
@@ -23,6 +24,7 @@ export default function RoomView({
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [previewFile, setPreviewFile] = useState<{url: string, name: string} | null>(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   
   // Quiz state
@@ -143,6 +145,12 @@ export default function RoomView({
         onClose={() => setPreviewFile(null)}
         fileUrl={previewFile?.url || null}
         fileName={previewFile?.name || null}
+      />
+
+      <RoomChatSidebar 
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        roomId={roomId}
       />
 
       {/* Header */}
@@ -386,13 +394,21 @@ export default function RoomView({
 
       </div>
 
-      {/* Quiz Modal */}
       <QuizModal 
         isOpen={!!activeQuiz} 
         onClose={() => setActiveQuiz(null)} 
         quiz={activeQuiz || []} 
         fileName={quizFileName} 
       />
+
+      {/* Floating Action Button for Chat */}
+      <button
+        onClick={() => setIsChatOpen(true)}
+        className="fixed bottom-6 right-6 lg:bottom-10 lg:right-10 z-30 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-xl shadow-primary/30 flex items-center justify-center hover:scale-105 transition-transform"
+        title="Chat with Room AI"
+      >
+        <Sparkles className="w-6 h-6" />
+      </button>
 
     </div>
   );
