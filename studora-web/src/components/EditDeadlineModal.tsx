@@ -20,10 +20,10 @@ export default function EditDeadlineModal({ isOpen, onClose, roomId, assignment 
     if (isOpen && assignment) {
       // Format the existing deadline for the datetime-local input
       const date = new Date(assignment.deadline);
-      // Get local time string format "YYYY-MM-DDThh:mm"
-      const offset = date.getTimezoneOffset() * 60000;
-      const localISOTime = (new Date(date.getTime() - offset)).toISOString().slice(0, 16);
-      setDeadline(localISOTime);
+      // Since we treat the server's UTC time as "floating time", 
+      // we can just slice the ISO string directly without timezone offset math
+      const utcString = date.toISOString().slice(0, 16);
+      setDeadline(utcString);
       setError("");
     }
   }, [isOpen, assignment]);
@@ -45,7 +45,7 @@ export default function EditDeadlineModal({ isOpen, onClose, roomId, assignment 
       const res = await updateAssignmentDeadlineAction(
         assignment.id,
         roomId,
-        new Date(deadline).toISOString()
+        deadline
       );
 
       if (res.error) {

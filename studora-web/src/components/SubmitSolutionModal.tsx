@@ -81,7 +81,7 @@ export default function SubmitSolutionModal({ isOpen, onClose, roomId, assignmen
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="bg-muted/50 p-4 rounded-lg border border-border mb-4">
             <p className="text-sm font-medium text-foreground">{assignment.title}</p>
-            <p className="text-xs text-muted-foreground mt-1">Due: {new Date(assignment.deadline).toLocaleString()}</p>
+            <p className="text-xs text-muted-foreground mt-1">Due: {new Date(assignment.deadline).toLocaleString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}</p>
           </div>
 
           <div>

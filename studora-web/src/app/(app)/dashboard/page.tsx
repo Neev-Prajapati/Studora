@@ -96,7 +96,7 @@ export default function Dashboard() {
             subject: dl.roomName,
             status,
             due: deadlineDate.toLocaleString(undefined, {
-              month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+              timeZone: 'UTC', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
             })
           };
         });

@@ -215,7 +215,7 @@ export default function AssignmentRoomView({
                       <div className="mt-4 flex flex-wrap gap-4 text-xs">
                         <div className="flex items-center gap-1.5 text-muted-foreground bg-muted/50 px-2.5 py-1.5 rounded-md border border-border/50">
                           <Calendar className="w-3.5 h-3.5" />
-                          <span>Due: <span className="font-medium text-foreground">{new Date(assignment.deadline).toLocaleString()}</span></span>
+                          <span>Due: <span className="font-medium text-foreground">{new Date(assignment.deadline).toLocaleString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}</span></span>
                         </div>
                         <div className="flex items-center gap-1.5 text-muted-foreground bg-muted/50 px-2.5 py-1.5 rounded-md border border-border/50">
                           <Users className="w-3.5 h-3.5" />
