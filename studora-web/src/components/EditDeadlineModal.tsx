@@ -45,7 +45,7 @@ export default function EditDeadlineModal({ isOpen, onClose, roomId, assignment 
       const res = await updateAssignmentDeadlineAction(
         assignment.id,
         roomId,
-        deadline
+        new Date(deadline).toISOString()
       );
 
       if (res.error) {

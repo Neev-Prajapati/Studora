@@ -58,7 +58,7 @@ export default function CreateAssignmentModal({ isOpen, onClose, roomId }: Props
         description,
         uploadJson.fileUrl,
         uploadJson.fileName,
-        deadline
+        new Date(deadline).toISOString()
       );
 
       if (res.error) {
