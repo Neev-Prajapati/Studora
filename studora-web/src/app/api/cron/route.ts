@@ -118,16 +118,9 @@ export async function GET(request: Request) {
       console.log(`[Cron API] Sent 4h reminder for assignment ${asm.id}`);
     }
 
-    // 3. Delete expired assignments
-    const deleted = await db.delete(assignment)
-      .where(lt(assignment.deadline, now))
-      .returning({ id: assignment.id, title: assignment.title });
-      
-    if (deleted.length > 0) {
-      console.log(`[Cron API] Deleted ${deleted.length} expired assignment(s):`, deleted.map(a => a.title).join(", "));
-    }
+    // 3. (Removed) We no longer delete expired assignments so that users can still view them and teachers can grade them.
     
-    return NextResponse.json({ success: true, deleted: deleted.length });
+    return NextResponse.json({ success: true, processed: upcoming24h.length + upcoming4h.length });
   } catch (error) {
     console.error("[Cron API] Failed to run cron job:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

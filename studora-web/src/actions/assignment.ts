@@ -262,6 +262,10 @@ export async function createAssignmentRecord(roomId: string, title: string, desc
 
     await logAssignmentActivity(roomId, session.user.id, "posted an assignment", title);
 
+    const roomInfo = await db.select({ name: assignmentRoom.name }).from(assignmentRoom).where(eq(assignmentRoom.id, roomId));
+    const roomName = roomInfo.length > 0 ? roomInfo[0].name : "Unknown Room";
+    dispatchAssignmentActivityEmail(roomId, session.user.name, `posted a new assignment "${title}"`, roomName, session.user.id);
+
     revalidatePath(`/assignments/${roomId}`);
     return { success: true };
   } catch (error) {
