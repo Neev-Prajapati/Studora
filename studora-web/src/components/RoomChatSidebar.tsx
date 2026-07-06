@@ -35,6 +35,15 @@ export default function RoomChatSidebar({ isOpen, onClose, roomId }: RoomChatSid
     if (!input.trim() || isLoading) return;
 
     const userMsg = input.trim();
+    
+    if (userMsg.toLowerCase() === "clear") {
+      setMessages([
+        { role: 'model', content: "Hi! I'm your AI Room Assistant. I've read all the study materials in this room. What would you like to know?" }
+      ]);
+      setInput("");
+      return;
+    }
+
     setInput("");
     
     // Add user message to UI
@@ -97,7 +106,7 @@ export default function RoomChatSidebar({ isOpen, onClose, roomId }: RoomChatSid
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4 custom-scrollbar">
           {messages.map((msg, idx) => (
             <div 
               key={idx} 
@@ -108,7 +117,7 @@ export default function RoomChatSidebar({ isOpen, onClose, roomId }: RoomChatSid
               }`}>
                 {msg.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
               </div>
-              <div className={`max-w-[80%] rounded-2xl p-3 text-sm ${
+              <div className={`max-w-[80%] rounded-2xl p-3 text-sm break-words ${
                 msg.role === 'user' 
                   ? 'bg-primary text-primary-foreground' 
                   : 'bg-muted text-foreground'
