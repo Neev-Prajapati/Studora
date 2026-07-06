@@ -2,9 +2,15 @@ import { X, ExternalLink, Columns } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Group as PanelGroup, Panel, Separator as PanelResizeHandle } from "react-resizable-panels";
 import dynamic from "next/dynamic";
+import { useTheme } from "next-themes";
 
-const Tldraw = dynamic(async () => (await import("tldraw")).Tldraw, { ssr: false });
-import "tldraw/tldraw.css";
+const Excalidraw = dynamic(
+  async () => {
+    const mod = await import("@excalidraw/excalidraw");
+    return mod.Excalidraw;
+  },
+  { ssr: false }
+);
 
 export default function FilePreviewModal({ 
   isOpen, 
@@ -19,6 +25,29 @@ export default function FilePreviewModal({
 }) {
   const [loading, setLoading] = useState(true);
   const [isSplitView, setIsSplitView] = useState(false);
+
+  const { theme } = useTheme();
+  const [excalidrawInitialData, setExcalidrawInitialData] = useState<any>(null);
+  const LOCAL_STORAGE_KEY = fileName ? `studora-excalidraw-${fileName}` : 'studora-excalidraw-default';
+
+  useEffect(() => {
+    if (isSplitView) {
+      const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (saved) {
+        try {
+          setExcalidrawInitialData(JSON.parse(saved));
+        } catch (e) {
+          setExcalidrawInitialData({ elements: [], appState: {} });
+        }
+      } else {
+        setExcalidrawInitialData({ elements: [], appState: {} });
+      }
+    }
+  }, [isSplitView, LOCAL_STORAGE_KEY]);
+
+  const handleExcalidrawChange = (elements: readonly any[], appState: any, files: any) => {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({ elements, appState, files }));
+  };
 
   // Close on Escape key
   useEffect(() => {
@@ -150,7 +179,13 @@ export default function FilePreviewModal({
               </PanelResizeHandle>
               <Panel defaultSize={50} minSize={20} className="relative bg-background">
                 <div className="absolute inset-0">
-                  <Tldraw persistenceKey={fileName ? `studora-board-${fileName}` : 'studora-board-default'} />
+                  {excalidrawInitialData && (
+                    <Excalidraw 
+                      theme={theme === 'dark' ? 'dark' : 'light'}
+                      initialData={excalidrawInitialData}
+                      onChange={handleExcalidrawChange}
+                    />
+                  )}
                 </div>
               </Panel>
             </PanelGroup>
