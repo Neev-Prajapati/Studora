@@ -150,7 +150,7 @@ export default function FilePreviewModal({
               </PanelResizeHandle>
               <Panel defaultSize={50} minSize={20} className="relative bg-background">
                 <div className="absolute inset-0">
-                  <Tldraw inferDarkMode persistenceKey={fileName ? `studora-board-${fileName}` : 'studora-board-default'} />
+                  <Tldraw persistenceKey={fileName ? `studora-board-${fileName}` : 'studora-board-default'} />
                 </div>
               </Panel>
             </PanelGroup>
