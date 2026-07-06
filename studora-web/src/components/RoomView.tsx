@@ -38,6 +38,7 @@ export default function RoomView({
   const [activeFlashcards, setActiveFlashcards] = useState<any[] | null>(null);
   const [flashcardsFileName, setFlashcardsFileName] = useState("");
   const [generatingFlashcardsId, setGeneratingFlashcardsId] = useState<string | null>(null);
+  const [flashcardsError, setFlashcardsError] = useState("");
 
   const copyCode = (code: string) => {
     navigator.clipboard.writeText(code);
@@ -130,7 +131,7 @@ export default function RoomView({
       setQuizFileName(fileName);
     } catch (err: any) {
       setQuizError(err.message || "An unexpected error occurred");
-      alert(err.message || "Failed to generate quiz");
+      console.error(err);
     } finally {
       setGeneratingQuizId(null);
     }
@@ -139,6 +140,7 @@ export default function RoomView({
   const handleGenerateFlashcards = async (fileUrl: string, fileName: string, fileId: string) => {
     try {
       setGeneratingFlashcardsId(fileId);
+      setFlashcardsError("");
       
       const res = await fetch("/api/ai/flashcards", {
         method: "POST",
@@ -153,7 +155,8 @@ export default function RoomView({
       setActiveFlashcards(data.flashcards);
       setFlashcardsFileName(fileName);
     } catch (err: any) {
-      alert(err.message || "Failed to generate flashcards");
+      setFlashcardsError(err.message || "Failed to generate flashcards");
+      console.error(err);
     } finally {
       setGeneratingFlashcardsId(null);
     }
@@ -268,6 +271,16 @@ export default function RoomView({
             {uploadError && (
               <div className="text-sm text-destructive bg-destructive/10 p-2 rounded-md font-medium">
                 {uploadError}
+              </div>
+            )}
+            {quizError && (
+              <div className="text-sm text-destructive bg-destructive/10 p-2 rounded-md font-medium mt-2">
+                Quiz Error: {quizError}
+              </div>
+            )}
+            {flashcardsError && (
+              <div className="text-sm text-destructive bg-destructive/10 p-2 rounded-md font-medium mt-2">
+                Flashcards Error: {flashcardsError}
               </div>
             )}
           </div>

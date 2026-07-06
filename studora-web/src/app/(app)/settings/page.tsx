@@ -431,22 +431,6 @@ export default function SettingsPage() {
                       <div className="w-11 h-6 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                     </div>
                   </label>
-
-                  <label className="flex items-center justify-between p-4 border border-border rounded-lg bg-card cursor-pointer hover:border-foreground/20 transition-colors">
-                    <div>
-                      <p className="font-medium text-foreground">Upcoming Deadlines</p>
-                      <p className="text-sm text-muted-foreground">Show assignments that are due soon.</p>
-                    </div>
-                    <div className="relative inline-flex items-center cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        className="sr-only peer"
-                        checked={preferences.showUpcomingDeadlines}
-                        onChange={(e) => preferences.updatePreference("showUpcomingDeadlines", e.target.checked)}
-                      />
-                      <div className="w-11 h-6 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                    </div>
-                  </label>
                 </div>
               </section>
             </>
@@ -468,6 +452,22 @@ export default function SettingsPage() {
                   <div className="py-8 text-center text-muted-foreground animate-pulse">Loading preferences...</div>
                 ) : (
                   <div className="space-y-3">
+                    <label className="flex items-center justify-between p-4 border border-border rounded-lg bg-card cursor-pointer hover:border-foreground/20 transition-colors">
+                      <div>
+                        <p className="font-medium text-foreground">In-App Assignment Popups</p>
+                        <p className="text-sm text-muted-foreground">Show upcoming assignment deadlines when you open the website.</p>
+                      </div>
+                      <div className="relative inline-flex items-center cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          className="sr-only peer"
+                          checked={preferences.showUpcomingDeadlines}
+                          onChange={(e) => preferences.updatePreference("showUpcomingDeadlines", e.target.checked)}
+                        />
+                        <div className="w-11 h-6 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                      </div>
+                    </label>
+
                     <label className="flex items-center justify-between p-4 border border-border rounded-lg bg-card cursor-pointer hover:border-foreground/20 transition-colors">
                       <div>
                         <p className="font-medium text-foreground">Deadline Reminders</p>

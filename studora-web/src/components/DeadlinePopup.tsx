@@ -4,13 +4,17 @@ import { useEffect, useState } from "react";
 import { getUpcomingDeadlines } from "@/actions/assignment";
 import { Clock, X } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { usePreferences } from "./PreferencesProvider";
 
 export default function DeadlinePopup() {
   const [closestDeadline, setClosestDeadline] = useState<any>(null);
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
+  const preferences = usePreferences();
 
   useEffect(() => {
+    if (preferences.showUpcomingDeadlines === false) return;
+
     // Only run once per session
     // const hasShown = sessionStorage.getItem("hasShownDeadlinePopup");
     // if (hasShown) return;
