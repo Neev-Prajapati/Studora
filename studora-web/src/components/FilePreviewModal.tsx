@@ -1,7 +1,9 @@
 import { X, ExternalLink, Columns } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Group as PanelGroup, Panel, Separator as PanelResizeHandle } from "react-resizable-panels";
-import { Tldraw } from "tldraw";
+import dynamic from "next/dynamic";
+
+const Tldraw = dynamic(async () => (await import("tldraw")).Tldraw, { ssr: false });
 import "tldraw/tldraw.css";
 
 export default function FilePreviewModal({ 
