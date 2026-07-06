@@ -5,6 +5,7 @@ import { GoogleGenAI } from "@google/genai";
 import { db } from "@/db";
 import { file as fileTable, roomMember } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
+import { fileCache } from "@/lib/fileCache";
 
 export async function POST(req: Request) {
   try {
@@ -39,6 +40,11 @@ export async function POST(req: Request) {
     // Process all files concurrently
     const fileContents = await Promise.all(roomFiles.map(async (f) => {
       try {
+        if (fileCache.has(f.url)) {
+          console.log(`[AI Chat] Cache hit for file: ${f.name}`);
+          return fileCache.get(f.url);
+        }
+
         console.log(`[AI Chat] Fetching file: ${f.name}`);
         const fileRes = await fetch(f.url);
         if (!fileRes.ok) return null;
@@ -77,13 +83,17 @@ export async function POST(req: Request) {
         }
 
         if (extractedText) {
-          return { text: `--- Document: ${f.name} ---\n${extractedText}` };
+          const result = { text: `--- Document: ${f.name} ---\n${extractedText}` };
+          fileCache.set(f.url, result);
+          return result;
         } else {
           // If it's a pdf or image, send as inlineData
-          return {
+          const result = {
             text: `--- Document: ${f.name} (Attached) ---`,
             inlineData: { data: buffer.toString("base64"), mimeType }
           };
+          fileCache.set(f.url, result);
+          return result;
         }
       } catch (e) {
         console.error(`Error processing file ${f.name}`, e);

@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Folder, Users, Settings, Upload, FileText, Download, Eye, Trash2, ArrowLeft, MoreVertical, Loader2, Copy, Check, BrainCircuit, Sparkles } from "lucide-react";
+import { Folder, Users, Settings, Upload, FileText, Download, Eye, Trash2, ArrowLeft, MoreVertical, Loader2, Copy, Check, BrainCircuit, Sparkles, Layers } from "lucide-react";
 import Link from "next/link";
 import RoomSettingsModal from "./RoomSettingsModal";
 import FilePreviewModal from "./FilePreviewModal";
 import QuizModal from "./QuizModal";
+import FlashcardModal from "./FlashcardModal";
 import RoomChatSidebar from "./RoomChatSidebar";
 import { deleteFileAction, updateMemberRole, removeMember, saveFileRecord } from "@/actions/room";
 import { useRouter } from "next/navigation";
@@ -32,6 +33,11 @@ export default function RoomView({
   const [quizFileName, setQuizFileName] = useState("");
   const [generatingQuizId, setGeneratingQuizId] = useState<string | null>(null);
   const [quizError, setQuizError] = useState("");
+  
+  // Flashcards state
+  const [activeFlashcards, setActiveFlashcards] = useState<any[] | null>(null);
+  const [flashcardsFileName, setFlashcardsFileName] = useState("");
+  const [generatingFlashcardsId, setGeneratingFlashcardsId] = useState<string | null>(null);
 
   const copyCode = (code: string) => {
     navigator.clipboard.writeText(code);
@@ -127,6 +133,29 @@ export default function RoomView({
       alert(err.message || "Failed to generate quiz");
     } finally {
       setGeneratingQuizId(null);
+    }
+  };
+
+  const handleGenerateFlashcards = async (fileUrl: string, fileName: string, fileId: string) => {
+    try {
+      setGeneratingFlashcardsId(fileId);
+      
+      const res = await fetch("/api/ai/flashcards", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileUrl, fileName })
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok) throw new Error(data.error || "Failed to generate flashcards");
+      
+      setActiveFlashcards(data.flashcards);
+      setFlashcardsFileName(fileName);
+    } catch (err: any) {
+      alert(err.message || "Failed to generate flashcards");
+    } finally {
+      setGeneratingFlashcardsId(null);
     }
   };
 
@@ -282,6 +311,19 @@ export default function RoomView({
                         )}
                       </button>
 
+                      <button 
+                        onClick={() => handleGenerateFlashcards(file.url, file.name, file.id)}
+                        disabled={generatingFlashcardsId === file.id}
+                        className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-colors inline-flex disabled:opacity-50" 
+                        title="Generate Flashcards"
+                      >
+                        {generatingFlashcardsId === file.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Layers className="w-4 h-4" />
+                        )}
+                      </button>
+
                       <a 
                         href={file.url} 
                         download={file.name}
@@ -399,6 +441,13 @@ export default function RoomView({
         onClose={() => setActiveQuiz(null)} 
         quiz={activeQuiz || []} 
         fileName={quizFileName} 
+      />
+
+      <FlashcardModal 
+        isOpen={!!activeFlashcards} 
+        onClose={() => setActiveFlashcards(null)} 
+        flashcards={activeFlashcards || []} 
+        fileName={flashcardsFileName} 
       />
 
       {/* Floating Action Button for Chat */}
