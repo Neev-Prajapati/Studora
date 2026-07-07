@@ -10,7 +10,7 @@ export function Tooltip({ children, content }: { children: React.ReactElement; c
 
   if (!content) return <>{children}</>;
 
-  const trigger = React.cloneElement(children, {
+  const trigger = React.cloneElement(children as any, {
     ref: triggerRef,
     onMouseEnter: (e: any) => {
       if (triggerRef.current) {
@@ -21,11 +21,11 @@ export function Tooltip({ children, content }: { children: React.ReactElement; c
         });
       }
       setShow(true);
-      if (children.props.onMouseEnter) children.props.onMouseEnter(e);
+      if ((children as any).props.onMouseEnter) (children as any).props.onMouseEnter(e);
     },
     onMouseLeave: (e: any) => {
       setShow(false);
-      if (children.props.onMouseLeave) children.props.onMouseLeave(e);
+      if ((children as any).props.onMouseLeave) (children as any).props.onMouseLeave(e);
     }
   });
 
