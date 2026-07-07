@@ -8,7 +8,7 @@ import { Stage, Layer, Rect, Circle, Ellipse, Line, Arrow, Text, Image as KonvaI
 
 const generateId = () => Math.random().toString(36).substring(2, 9);
 
-type ToolType = 'select' | 'pen' | 'eraser' | 'rectangle' | 'circle' | 'triangle' | 'diamond' | 'line' | 'dotted-line' | 'arrow-right' | 'arrow-left' | 'arrow-both' | 'text' | 'pan';
+type ToolType = 'select' | 'pen' | 'eraser' | 'rectangle' | 'circle' | 'triangle' | 'diamond' | 'line' | 'dotted-line' | 'arrow-right' | 'arrow-left' | 'arrow-both' | 'text' | 'pan' | 'image';
 
 export interface Element {
   id: string;
@@ -24,7 +24,22 @@ export interface Element {
   rotation?: number;
   scaleX?: number;
   scaleY?: number;
+  src?: string;
 }
+
+const URLImage = ({ el, commonProps }: { el: Element, commonProps: any }) => {
+  const [image, setImage] = useState<HTMLImageElement | null>(null);
+  useEffect(() => {
+    if (el.src) {
+      const img = new window.Image();
+      img.src = el.src;
+      img.onload = () => setImage(img);
+    }
+  }, [el.src]);
+  
+  if (!image) return null;
+  return <KonvaImage image={image} {...commonProps} width={el.width} height={el.height} />;
+};
 
 export default function KonvaCanvas({ fileUrl }: { fileUrl: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -68,6 +83,74 @@ export default function KonvaCanvas({ fileUrl }: { fileUrl: string }) {
     if (containerRef.current) observer.observe(containerRef.current);
     return () => observer.disconnect();
   }, []);
+
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') return;
+      
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          const blob = items[i].getAsFile();
+          if (blob) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              const img = new window.Image();
+              img.onload = () => {
+                let w = img.width;
+                let h = img.height;
+                const maxDim = 800;
+                if (w > maxDim || h > maxDim) {
+                   const ratio = Math.min(maxDim / w, maxDim / h);
+                   w *= ratio;
+                   h *= ratio;
+                }
+                
+                const stage = stageRef.current;
+                const center = stage ? {
+                   x: (-stage.x() + stage.width() / 2) / stage.scaleX() - w / 2,
+                   y: (-stage.y() + stage.height() / 2) / stage.scaleY() - h / 2,
+                } : { x: 0, y: 0 };
+                
+                const newEl: Element = {
+                  id: generateId(),
+                  type: 'image',
+                  x: center.x,
+                  y: center.y,
+                  width: w,
+                  height: h,
+                  src: img.src,
+                  color: "#000",
+                  lineWidth: 0,
+                };
+                
+                setElements(prev => {
+                  const next = [...prev, newEl];
+                  const newHistory = history.slice(0, historyStep + 1);
+                  newHistory.push(next);
+                  setHistory(newHistory);
+                  setHistoryStep(newHistory.length - 1);
+                  triggerSave(next);
+                  return next;
+                });
+                
+                setTool('select');
+                setSelectedId(newEl.id);
+              };
+              img.src = event.target?.result as string;
+            };
+            reader.readAsDataURL(blob);
+            break;
+          }
+        }
+      }
+    };
+    
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, [history, historyStep]);
   
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -471,6 +554,9 @@ export default function KonvaCanvas({ fileUrl }: { fileUrl: string }) {
                  }
                  if (el.type === 'text') {
                     return <Text key={el.id} {...commonProps} text={el.text} fill={el.color} fontSize={el.lineWidth * 6} fontFamily="sans-serif" />;
+                 }
+                 if (el.type === 'image') {
+                    return <URLImage key={el.id} el={el} commonProps={commonProps} />;
                  }
                  return null;
               })}
