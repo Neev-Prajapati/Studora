@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Folder, Users, Settings, Upload, FileText, Download, Eye, Trash2, ArrowLeft, MoreVertical, Loader2, Copy, Check, BrainCircuit, Sparkles, Layers } from "lucide-react";
 import Link from "next/link";
 import RoomSettingsModal from "./RoomSettingsModal";
@@ -25,9 +25,23 @@ export default function RoomView({
   const router = useRouter();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [activeFileDropdown, setActiveFileDropdown] = useState<string | null>(null);
   const [previewFile, setPreviewFile] = useState<{url: string, name: string} | null>(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.dropdown-container')) {
+        setActiveDropdown(null);
+        setActiveFileDropdown(null);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
   
   // Quiz state
   const [activeQuiz, setActiveQuiz] = useState<any[] | null>(null);
@@ -289,10 +303,10 @@ export default function RoomView({
           </div>
 
           {files && files.length > 0 ? (
-            <div className="rounded-xl border border-border bg-card overflow-hidden">
+            <div className="rounded-xl border border-border bg-card">
               <ul className="divide-y divide-border">
                 {files.map((file: any) => (
-                  <li key={file.id} className="p-4 hover:bg-muted/50 transition-colors flex items-center justify-between group">
+                  <li key={file.id} className="p-4 hover:bg-muted/50 first:rounded-t-xl last:rounded-b-xl transition-colors flex items-center justify-between group">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
                         <FileText className="w-5 h-5" />
@@ -315,53 +329,75 @@ export default function RoomView({
                         </button>
                       </Tooltip>
                       
-                      <Tooltip content="Generate AI Quiz">
-                        <button 
-                          onClick={() => handleGenerateQuiz(file.url, file.name, file.id)}
-                          disabled={generatingQuizId === file.id}
-                          className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-colors inline-flex disabled:opacity-50" 
-                        >
-                          {generatingQuizId === file.id ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <BrainCircuit className="w-4 h-4" />
-                          )}
-                        </button>
-                      </Tooltip>
-
-                      <Tooltip content="Generate Flashcards">
-                        <button 
-                          onClick={() => handleGenerateFlashcards(file.url, file.name, file.id)}
-                          disabled={generatingFlashcardsId === file.id}
-                          className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-colors inline-flex disabled:opacity-50" 
-                        >
-                          {generatingFlashcardsId === file.id ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <Layers className="w-4 h-4" />
-                          )}
-                        </button>
-                      </Tooltip>
-
-                      <Tooltip content="Download">
-                        <a 
-                          href={file.url} 
-                          download={file.name}
-                          className="p-2 text-muted-foreground hover:text-primary hover:bg-background rounded-md transition-colors inline-flex" 
-                        >
-                          <Download className="w-4 h-4" />
-                        </a>
-                      </Tooltip>
-                      {(role === 'owner' || (role === 'editor' && file.uploaderId === currentUserId)) && (
-                        <Tooltip content="Delete">
-                          <button 
-                            onClick={() => handleDeleteFile(file.id)}
-                            className="p-2 text-muted-foreground hover:text-destructive hover:bg-background rounded-md transition-colors" 
+                      <div className="relative dropdown-container">
+                        <Tooltip content="More Actions">
+                          <button
+                            onClick={() => setActiveFileDropdown(activeFileDropdown === file.id ? null : file.id)}
+                            className="p-2 text-muted-foreground hover:text-foreground hover:bg-background rounded-md transition-colors inline-flex"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <MoreVertical className="w-4 h-4" />
                           </button>
                         </Tooltip>
-                      )}
+                        
+                        {activeFileDropdown === file.id && (
+                          <div className="absolute right-0 top-full mt-1 w-48 bg-popover border border-border rounded-md shadow-md z-20 text-sm overflow-hidden animate-in fade-in zoom-in-95 duration-100 flex flex-col p-1">
+                            <button 
+                              onClick={() => {
+                                handleGenerateQuiz(file.url, file.name, file.id);
+                                setActiveFileDropdown(null);
+                              }}
+                              disabled={generatingQuizId === file.id}
+                              className="flex items-center gap-2 w-full px-3 py-2 text-left text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-sm transition-colors disabled:opacity-50" 
+                            >
+                              {generatingQuizId === file.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <BrainCircuit className="w-4 h-4" />
+                              )}
+                              <span>Generate Quiz</span>
+                            </button>
+
+                            <button 
+                              onClick={() => {
+                                handleGenerateFlashcards(file.url, file.name, file.id);
+                                setActiveFileDropdown(null);
+                              }}
+                              disabled={generatingFlashcardsId === file.id}
+                              className="flex items-center gap-2 w-full px-3 py-2 text-left text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-sm transition-colors disabled:opacity-50" 
+                            >
+                              {generatingFlashcardsId === file.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Layers className="w-4 h-4" />
+                              )}
+                              <span>Generate Flashcards</span>
+                            </button>
+
+                            <a 
+                              href={file.url} 
+                              download={file.name}
+                              onClick={() => setActiveFileDropdown(null)}
+                              className="flex items-center gap-2 w-full px-3 py-2 text-left text-muted-foreground hover:text-primary hover:bg-background rounded-sm transition-colors" 
+                            >
+                              <Download className="w-4 h-4" />
+                              <span>Download</span>
+                            </a>
+                            
+                            {(role === 'owner' || (role === 'editor' && file.uploaderId === currentUserId)) && (
+                              <button 
+                                onClick={() => {
+                                  handleDeleteFile(file.id);
+                                  setActiveFileDropdown(null);
+                                }}
+                                className="flex items-center gap-2 w-full px-3 py-2 text-left text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-sm transition-colors" 
+                              >
+                                <Trash2 className="w-4 h-4" />
+                                <span>Delete</span>
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </li>
                 ))}
@@ -413,7 +449,7 @@ export default function RoomView({
 
                     {/* Member Options (Owner only, cannot edit themselves here) */}
                     {role === 'owner' && member.userId !== currentUserId && (
-                      <div className="relative">
+                      <div className="relative dropdown-container">
                         <button 
                           onClick={() => setActiveDropdown(activeDropdown === member.userId ? null : member.userId)}
                           className="p-1 text-muted-foreground hover:text-foreground rounded-md transition-colors"
