@@ -11,6 +11,7 @@ import SubmitSolutionModal from "./SubmitSolutionModal";
 import AssignmentSolutionsModal from "./AssignmentSolutionsModal";
 import EditDeadlineModal from "./EditDeadlineModal";
 import { deleteAssignmentAction, updateAssignmentMemberRole, removeAssignmentMember } from "@/actions/assignment";
+import { Tooltip } from "./Tooltip";
 
 export default function AssignmentRoomView({ 
   roomId, 
@@ -166,20 +167,22 @@ export default function AssignmentRoomView({
             </div>
             {(role === 'owner' || (role === 'editor' && assignment.createdById === currentUserId)) && (
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button 
-                  onClick={() => setActiveAssignmentForEdit(assignment)}
-                  className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/80 rounded-md transition-colors" 
-                  title="Edit Deadline"
-                >
-                  <Calendar className="w-3.5 h-3.5" />
-                </button>
-                <button 
-                  onClick={() => handleDeleteAssignment(assignment.id)}
-                  className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors" 
-                  title="Delete Assignment"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
+                <Tooltip content="Edit Deadline">
+                  <button 
+                    onClick={() => setActiveAssignmentForEdit(assignment)}
+                    className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/80 rounded-md transition-colors" 
+                  >
+                    <Calendar className="w-3.5 h-3.5" />
+                  </button>
+                </Tooltip>
+                <Tooltip content="Delete Assignment">
+                  <button 
+                    onClick={() => handleDeleteAssignment(assignment.id)}
+                    className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors" 
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </Tooltip>
               </div>
             )}
           </div>
@@ -297,23 +300,25 @@ export default function AssignmentRoomView({
           <div className="hidden sm:flex items-center gap-4 text-right">
             <div>
               <p className="text-sm font-medium text-muted-foreground mb-1 text-left">Invite Code</p>
-              <button 
-                onClick={() => copyCode(inviteCode)}
-                className="font-mono text-lg font-bold tracking-widest bg-muted px-3 py-1 rounded-md text-foreground hover:bg-muted/80 transition-colors flex items-center gap-2"
-                title="Copy Code"
-              >
-                {inviteCode}
-                {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-muted-foreground" />}
-              </button>
+              <Tooltip content="Copy Code">
+                <button 
+                  onClick={() => copyCode(inviteCode)}
+                  className="font-mono text-lg font-bold tracking-widest bg-muted px-3 py-1 rounded-md text-foreground hover:bg-muted/80 transition-colors flex items-center gap-2"
+                >
+                  {inviteCode}
+                  {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-muted-foreground" />}
+                </button>
+              </Tooltip>
             </div>
             {role === 'owner' && (
-              <button 
-                onClick={() => setIsSettingsOpen(true)}
-                className="mt-6 p-2 rounded-md bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
-                title="Room Settings"
-              >
-                <Settings className="w-5 h-5" />
-              </button>
+              <Tooltip content="Room Settings">
+                <button 
+                  onClick={() => setIsSettingsOpen(true)}
+                  className="mt-6 p-2 rounded-md bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
+                >
+                  <Settings className="w-5 h-5" />
+                </button>
+              </Tooltip>
             )}
           </div>
         </div>

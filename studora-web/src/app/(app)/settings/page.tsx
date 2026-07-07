@@ -7,6 +7,7 @@ import { Moon, Sun, Monitor, Palette, CheckCircle2, LayoutDashboard, Bell, Loade
 import { useState, useEffect } from "react";
 import { getNotificationPreferences, updateNotificationPreferences, wipeAccountAndFilesAction } from "@/actions/user";
 import { useSession, updateUser, changeEmail, changePassword, signOut } from "@/lib/auth-client";
+import { Tooltip } from "@/components/Tooltip";
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
@@ -364,16 +365,16 @@ export default function SettingsPage() {
                 
                 <div className="flex flex-wrap gap-4">
                   {colorOptions.map((opt) => (
-                    <button
-                      key={opt.name}
-                      onClick={() => setColor(opt.name)}
-                      className={`relative flex items-center justify-center w-12 h-12 rounded-full transition-all ${opt.twClass} ${
-                        color === opt.name ? "ring-2 ring-offset-2 ring-offset-background ring-primary scale-110 shadow-md" : "hover:scale-105 opacity-80 hover:opacity-100"
-                      }`}
-                      title={opt.label}
-                    >
-                      {color === opt.name && <CheckCircle2 className="w-5 h-5 text-white" />}
-                    </button>
+                    <Tooltip key={opt.name} content={opt.label}>
+                      <button
+                        onClick={() => setColor(opt.name)}
+                        className={`relative flex items-center justify-center w-12 h-12 rounded-full transition-all ${opt.twClass} ${
+                          color === opt.name ? "ring-2 ring-offset-2 ring-offset-background ring-primary scale-110 shadow-md" : "hover:scale-105 opacity-80 hover:opacity-100"
+                        }`}
+                      >
+                        {color === opt.name && <CheckCircle2 className="w-5 h-5 text-white" />}
+                      </button>
+                    </Tooltip>
                   ))}
                 </div>
               </section>

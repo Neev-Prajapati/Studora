@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { X, FileText, Download, Eye, Loader2 } from "lucide-react";
 import { getAssignmentSubmissions } from "@/actions/assignment";
 import FilePreviewModal from "./FilePreviewModal";
+import { Tooltip } from "./Tooltip";
 
 type Props = {
   isOpen: boolean;
@@ -96,21 +97,23 @@ export default function AssignmentSolutionsModal({ isOpen, onClose, assignment }
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button 
-                        onClick={() => setPreviewFile({ url: sub.fileUrl, name: sub.fileName })}
-                        className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-colors" 
-                        title="Preview Solution"
-                      >
-                        <Eye className="w-5 h-5" />
-                      </button>
-                      <a 
-                        href={sub.fileUrl} 
-                        download={sub.fileName}
-                        className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-colors" 
-                        title="Download Solution"
-                      >
-                        <Download className="w-5 h-5" />
-                      </a>
+                      <Tooltip content="Preview Solution">
+                        <button 
+                          onClick={() => setPreviewFile({ url: sub.fileUrl, name: sub.fileName })}
+                          className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-colors" 
+                        >
+                          <Eye className="w-5 h-5" />
+                        </button>
+                      </Tooltip>
+                      <Tooltip content="Download Solution">
+                        <a 
+                          href={sub.fileUrl} 
+                          download={sub.fileName}
+                          className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-colors" 
+                        >
+                          <Download className="w-5 h-5" />
+                        </a>
+                      </Tooltip>
                     </div>
                   </li>
                 ))}

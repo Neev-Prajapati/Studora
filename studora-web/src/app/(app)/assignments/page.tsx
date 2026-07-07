@@ -7,6 +7,7 @@ import { getAssignmentRooms } from "@/actions/assignment";
 import AssignmentModals from "@/components/AssignmentModals";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Tooltip } from "@/components/Tooltip";
 
 let cachedAssignmentRooms: any[] | null = null;
 
@@ -147,14 +148,15 @@ export default function AssignmentsDashboard() {
                   {room.description && <p className="text-xs text-muted-foreground line-clamp-1 mt-1">{room.description}</p>}
                   <div className="mt-3 flex items-center justify-between text-sm text-muted-foreground border-t border-border pt-3">
                     <div className="flex items-center">
-                      <button 
-                        onClick={(e) => copyCode(room.inviteCode, e)}
-                        className="font-mono text-xs bg-muted px-2 py-1 rounded-md text-foreground mr-2 hover:bg-muted/80 transition-colors flex items-center gap-1" 
-                        title="Copy Code"
-                      >
-                        {room.inviteCode}
-                        {copiedCode === room.inviteCode ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3 text-muted-foreground" />}
-                      </button>
+                      <Tooltip content="Copy Code">
+                        <button 
+                          onClick={(e) => copyCode(room.inviteCode, e)}
+                          className="font-mono text-xs bg-muted px-2 py-1 rounded-md text-foreground mr-2 hover:bg-muted/80 transition-colors flex items-center gap-1" 
+                        >
+                          {room.inviteCode}
+                          {copiedCode === room.inviteCode ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3 text-muted-foreground" />}
+                        </button>
+                      </Tooltip>
                     </div>
                     <Link href={`/assignments/${room.id}`} onClick={(e) => e.stopPropagation()} className="text-primary text-xs font-medium hover:underline">
                       Open

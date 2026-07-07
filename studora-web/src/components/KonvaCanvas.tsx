@@ -41,6 +41,24 @@ const URLImage = ({ el, commonProps }: { el: Element, commonProps: any }) => {
   return <KonvaImage image={image} {...commonProps} width={el.width} height={el.height} />;
 };
 
+const Tooltip = ({ children, text }: { children: React.ReactNode; text: string }) => {
+  const [show, setShow] = useState(false);
+  return (
+    <div 
+      className="relative flex items-center justify-center"
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+    >
+      {children}
+      {show && (
+        <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-black/90 text-white/90 text-[11px] font-medium rounded whitespace-nowrap z-[9999] shadow-xl border border-white/10 pointer-events-none animate-in fade-in zoom-in-95 duration-100">
+          {text}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function KonvaCanvas({ fileUrl }: { fileUrl: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<any>(null);
@@ -388,44 +406,64 @@ export default function KonvaCanvas({ fileUrl }: { fileUrl: string }) {
   return (
     <div className="flex flex-col h-full bg-[#1e1e1e] rounded-xl overflow-hidden relative" onClick={() => { setIsShapesOpen(false); setIsLinesOpen(false); setIsColorsOpen(false); }}>
       {/* Ultra Compact Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-1.5 p-1.5 border-b border-white/5 bg-gradient-to-r from-black/40 to-black/20 shadow-sm z-50">
+      <div className="flex flex-wrap items-center justify-between gap-1.5 p-1.5 border-b border-white/5 bg-gradient-to-r from-black/40 to-black/20 shadow-sm z-50 relative">
         <div className="flex flex-wrap items-center gap-1.5">
           
           <div className="flex items-center p-0.5 bg-black/40 border border-white/10 rounded-lg shadow-inner backdrop-blur-md">
-              <button onClick={undo} disabled={historyStep <= 0} className={`p-1.5 rounded-md transition-all ${historyStep > 0 ? "text-white/70 hover:text-white hover:bg-white/10 active:scale-95" : "text-white/20 cursor-not-allowed"}`} title="Undo"><Undo2 className="w-3.5 h-3.5" /></button>
-              <button onClick={redo} disabled={historyStep >= history.length - 1} className={`p-1.5 rounded-md transition-all ${historyStep < history.length - 1 ? "text-white/70 hover:text-white hover:bg-white/10 active:scale-95" : "text-white/20 cursor-not-allowed"}`} title="Redo"><Redo2 className="w-3.5 h-3.5" /></button>
+            <Tooltip text="Undo">
+              <button onClick={undo} disabled={historyStep <= 0} className={`p-1.5 rounded-md transition-all ${historyStep > 0 ? "text-white/70 hover:text-white hover:bg-white/10 active:scale-95" : "text-white/20 cursor-not-allowed"}`}><Undo2 className="w-3.5 h-3.5" /></button>
+            </Tooltip>
+            <Tooltip text="Redo">
+              <button onClick={redo} disabled={historyStep >= history.length - 1} className={`p-1.5 rounded-md transition-all ${historyStep < history.length - 1 ? "text-white/70 hover:text-white hover:bg-white/10 active:scale-95" : "text-white/20 cursor-not-allowed"}`}><Redo2 className="w-3.5 h-3.5" /></button>
+            </Tooltip>
           </div>
 
           <div className="relative">
-              <button onClick={(e) => { e.stopPropagation(); setIsColorsOpen(!isColorsOpen); setIsShapesOpen(false); setIsLinesOpen(false); }} className="flex items-center gap-1.5 p-1 bg-black/40 border border-white/10 rounded-lg shadow-inner backdrop-blur-md transition-all hover:bg-white/10 active:scale-95" title="Colors">
+            <Tooltip text="Colors">
+              <button onClick={(e) => { e.stopPropagation(); setIsColorsOpen(!isColorsOpen); setIsShapesOpen(false); setIsLinesOpen(false); }} className="flex items-center gap-1.5 p-1 bg-black/40 border border-white/10 rounded-lg shadow-inner backdrop-blur-md transition-all hover:bg-white/10 active:scale-95">
                 <div className="w-5 h-5 rounded-full ring-1 ring-white/20" style={{ backgroundColor: color }} />
                 <ChevronDown className="w-3 h-3 text-white/70" />
               </button>
-              {isColorsOpen && (
-                <div className="absolute top-[calc(100%+8px)] left-0 bg-[#1e1e1e] border border-white/10 rounded-xl shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 duration-100 w-[140px]">
-                  <div className="grid grid-cols-5 gap-2">
-                    {colors.map((c) => (
-                      <button key={c.value} onClick={(e) => { e.stopPropagation(); setColor(c.value); if(tool === 'eraser') setTool('pen'); setIsColorsOpen(false); }} className={`w-5 h-5 rounded-full transition-all duration-200 ${color === c.value && tool !== 'eraser' ? "scale-110 ring-2 ring-primary ring-offset-2 ring-offset-[#1e1e1e] shadow-md" : "opacity-80 hover:opacity-100 hover:scale-110"}`} style={{ backgroundColor: c.value }} title={c.label} />
-                    ))}
-                  </div>
+            </Tooltip>
+            {isColorsOpen && (
+              <div className="absolute top-[calc(100%+8px)] left-0 bg-[#1e1e1e] border border-white/10 rounded-xl shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 duration-100 w-[140px]">
+                <div className="grid grid-cols-5 gap-2">
+                  {colors.map((c) => (
+                    <Tooltip key={c.value} text={c.label}>
+                      <button onClick={(e) => { e.stopPropagation(); setColor(c.value); if(tool === 'eraser') setTool('pen'); setIsColorsOpen(false); }} className={`w-5 h-5 rounded-full transition-all duration-200 ${color === c.value && tool !== 'eraser' ? "scale-110 ring-2 ring-primary ring-offset-2 ring-offset-[#1e1e1e] shadow-md" : "opacity-80 hover:opacity-100 hover:scale-110"}`} style={{ backgroundColor: c.value }} />
+                    </Tooltip>
+                  ))}
                 </div>
-              )}
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-0.5 p-0.5 bg-black/40 border border-white/10 rounded-lg shadow-inner backdrop-blur-md">
-            <button onClick={() => {setTool('select'); setSelectedId(null);}} className={`p-1.5 rounded-md transition-all ${tool === 'select' ? "bg-primary text-primary-foreground shadow-md" : "text-white/70 hover:text-white hover:bg-white/10 active:scale-95"}`} title="Select & Move"><MousePointer2 className="w-4 h-4" /></button>
-            <button onClick={() => setTool('pan')} className={`p-1.5 rounded-md transition-all ${tool === 'pan' ? "bg-primary text-primary-foreground shadow-md" : "text-white/70 hover:text-white hover:bg-white/10 active:scale-95"}`} title="Pan Canvas"><Hand className="w-4 h-4" /></button>
-            <button onClick={() => setTool('pen')} className={`p-1.5 rounded-md transition-all ${tool === 'pen' ? "bg-primary text-primary-foreground shadow-md" : "text-white/70 hover:text-white hover:bg-white/10 active:scale-95"}`} title="Pen"><PenTool className="w-4 h-4" /></button>
-            <button onClick={() => setTool('eraser')} className={`p-1.5 rounded-md transition-all ${tool === 'eraser' ? "bg-primary text-primary-foreground shadow-md" : "text-white/70 hover:text-white hover:bg-white/10 active:scale-95"}`} title="Eraser"><Eraser className="w-4 h-4" /></button>
-            <button onClick={() => setTool('text')} className={`p-1.5 rounded-md transition-all ${tool === 'text' ? "bg-primary text-primary-foreground shadow-md" : "text-white/70 hover:text-white hover:bg-white/10 active:scale-95"}`} title="Text"><Type className="w-4 h-4" /></button>
+            <Tooltip text="Select & Move">
+              <button onClick={() => {setTool('select'); setSelectedId(null);}} className={`p-1.5 rounded-md transition-all ${tool === 'select' ? "bg-primary text-primary-foreground shadow-md" : "text-white/70 hover:text-white hover:bg-white/10 active:scale-95"}`}><MousePointer2 className="w-4 h-4" /></button>
+            </Tooltip>
+            <Tooltip text="Pan Canvas">
+              <button onClick={() => setTool('pan')} className={`p-1.5 rounded-md transition-all ${tool === 'pan' ? "bg-primary text-primary-foreground shadow-md" : "text-white/70 hover:text-white hover:bg-white/10 active:scale-95"}`}><Hand className="w-4 h-4" /></button>
+            </Tooltip>
+            <Tooltip text="Pen">
+              <button onClick={() => setTool('pen')} className={`p-1.5 rounded-md transition-all ${tool === 'pen' ? "bg-primary text-primary-foreground shadow-md" : "text-white/70 hover:text-white hover:bg-white/10 active:scale-95"}`}><PenTool className="w-4 h-4" /></button>
+            </Tooltip>
+            <Tooltip text="Eraser">
+              <button onClick={() => setTool('eraser')} className={`p-1.5 rounded-md transition-all ${tool === 'eraser' ? "bg-primary text-primary-foreground shadow-md" : "text-white/70 hover:text-white hover:bg-white/10 active:scale-95"}`}><Eraser className="w-4 h-4" /></button>
+            </Tooltip>
+            <Tooltip text="Text">
+              <button onClick={() => setTool('text')} className={`p-1.5 rounded-md transition-all ${tool === 'text' ? "bg-primary text-primary-foreground shadow-md" : "text-white/70 hover:text-white hover:bg-white/10 active:scale-95"}`}><Type className="w-4 h-4" /></button>
+            </Tooltip>
           </div>
           
           <div className="flex items-center gap-0.5 p-0.5 bg-black/40 border border-white/10 rounded-lg shadow-inner backdrop-blur-md">
               <div className="relative">
-                <button onClick={(e) => { e.stopPropagation(); setIsShapesOpen(!isShapesOpen); setIsLinesOpen(false); setIsColorsOpen(false); }} className={`p-1.5 flex items-center gap-1 rounded-md transition-all ${['rectangle', 'circle', 'triangle', 'diamond'].includes(tool) ? "bg-primary text-primary-foreground shadow-md" : "text-white/70 hover:text-white hover:bg-white/10 active:scale-95"}`} title="Shapes">
-                  {tool === 'rectangle' ? <Square className="w-4 h-4" /> : tool === 'circle' ? <CircleIcon className="w-4 h-4" /> : tool === 'triangle' ? <Triangle className="w-4 h-4" /> : tool === 'diamond' ? <Diamond className="w-4 h-4" /> : <Shapes className="w-4 h-4" />}
-                  <ChevronDown className="w-3 h-3 opacity-70" />
-                </button>
+                <Tooltip text="Shapes">
+                  <button onClick={(e) => { e.stopPropagation(); setIsShapesOpen(!isShapesOpen); setIsLinesOpen(false); setIsColorsOpen(false); }} className={`p-1.5 flex items-center gap-1 rounded-md transition-all ${['rectangle', 'circle', 'triangle', 'diamond'].includes(tool) ? "bg-primary text-primary-foreground shadow-md" : "text-white/70 hover:text-white hover:bg-white/10 active:scale-95"}`}>
+                    {tool === 'rectangle' ? <Square className="w-4 h-4" /> : tool === 'circle' ? <CircleIcon className="w-4 h-4" /> : tool === 'triangle' ? <Triangle className="w-4 h-4" /> : tool === 'diamond' ? <Diamond className="w-4 h-4" /> : <Shapes className="w-4 h-4" />}
+                    <ChevronDown className="w-3 h-3 opacity-70" />
+                  </button>
+                </Tooltip>
                 {isShapesOpen && (
                   <div className="absolute top-[calc(100%+8px)] left-1/2 -translate-x-1/2 bg-[#1e1e1e] border border-white/10 rounded-xl shadow-2xl flex flex-col p-1.5 z-50 min-w-[140px] animate-in fade-in zoom-in-95 duration-100">
                     <button onClick={(e) => { e.stopPropagation(); setTool('rectangle'); setIsShapesOpen(false); }} className="flex items-center gap-3 p-2 hover:bg-white/10 rounded-lg text-sm text-white/90"><Square className="w-4 h-4 text-primary" /> Rectangle</button>
@@ -436,10 +474,12 @@ export default function KonvaCanvas({ fileUrl }: { fileUrl: string }) {
                 )}
               </div>
               <div className="relative">
-                <button onClick={(e) => { e.stopPropagation(); setIsLinesOpen(!isLinesOpen); setIsShapesOpen(false); setIsColorsOpen(false); }} className={`p-1.5 flex items-center gap-1 rounded-md transition-all ${['line', 'dotted-line', 'arrow-right', 'arrow-left', 'arrow-both'].includes(tool) ? "bg-primary text-primary-foreground shadow-md" : "text-white/70 hover:text-white hover:bg-white/10 active:scale-95"}`} title="Lines & Arrows">
-                  {tool === 'line' ? <Minus className="w-4 h-4" /> : tool === 'dotted-line' ? <Minus className="w-4 h-4" style={{ strokeDasharray: '4 4' }} /> : tool === 'arrow-right' ? <ArrowRight className="w-4 h-4" /> : tool === 'arrow-left' ? <ArrowLeft className="w-4 h-4" /> : tool === 'arrow-both' ? <ArrowLeftRight className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
-                  <ChevronDown className="w-3 h-3 opacity-70" />
-                </button>
+                <Tooltip text="Lines & Arrows">
+                  <button onClick={(e) => { e.stopPropagation(); setIsLinesOpen(!isLinesOpen); setIsShapesOpen(false); setIsColorsOpen(false); }} className={`p-1.5 flex items-center gap-1 rounded-md transition-all ${['line', 'dotted-line', 'arrow-right', 'arrow-left', 'arrow-both'].includes(tool) ? "bg-primary text-primary-foreground shadow-md" : "text-white/70 hover:text-white hover:bg-white/10 active:scale-95"}`}>
+                    {tool === 'line' ? <Minus className="w-4 h-4" /> : tool === 'dotted-line' ? <Minus className="w-4 h-4" style={{ strokeDasharray: '4 4' }} /> : tool === 'arrow-right' ? <ArrowRight className="w-4 h-4" /> : tool === 'arrow-left' ? <ArrowLeft className="w-4 h-4" /> : tool === 'arrow-both' ? <ArrowLeftRight className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
+                    <ChevronDown className="w-3 h-3 opacity-70" />
+                  </button>
+                </Tooltip>
                 {isLinesOpen && (
                   <div className="absolute top-[calc(100%+8px)] left-1/2 -translate-x-1/2 bg-[#1e1e1e] border border-white/10 rounded-xl shadow-2xl flex flex-col p-1.5 z-50 min-w-[160px] animate-in fade-in zoom-in-95 duration-100">
                     <button onClick={(e) => { e.stopPropagation(); setTool('line'); setIsLinesOpen(false); }} className="flex items-center gap-3 p-2 hover:bg-white/10 rounded-lg text-sm text-white/90"><Minus className="w-4 h-4 text-primary" /> Straight Line</button>
@@ -453,16 +493,24 @@ export default function KonvaCanvas({ fileUrl }: { fileUrl: string }) {
           </div>
           
           <div className="flex items-center gap-1.5 px-2 py-0.5 bg-black/40 border border-white/10 rounded-lg shadow-inner backdrop-blur-md h-[28px]">
-            <div className="w-1 h-1 rounded-full bg-white/40" />
-            <input type="range" min="1" max="10" value={lineWidth} onChange={(e) => setLineWidth(Number(e.target.value))} className="w-16 accent-primary cursor-pointer" title="Stroke/Font Size" />
-            <div className="w-2 h-2 rounded-full bg-white/40" />
+            <Tooltip text="Stroke/Font Size">
+              <div className="flex items-center gap-1.5">
+                <div className="w-1 h-1 rounded-full bg-white/40" />
+                <input type="range" min="1" max="10" value={lineWidth} onChange={(e) => setLineWidth(Number(e.target.value))} className="w-16 accent-primary cursor-pointer" />
+                <div className="w-2 h-2 rounded-full bg-white/40" />
+              </div>
+            </Tooltip>
           </div>
         </div>
         
         <div className="flex items-center gap-2 pr-1">
           {isSaving && <div className="flex items-center gap-1.5 text-primary/80 text-[11px] font-medium whitespace-nowrap"><Loader2 className="w-3 h-3 animate-spin" /> Saving...</div>}
-          <button onClick={() => setScale(1)} className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium text-white/70 hover:text-white bg-black/20 hover:bg-white/10 border border-white/5 rounded-lg transition-all active:scale-95" title="Reset Zoom">{Math.round(scale * 100)}%</button>
-          <button onClick={handleClear} className="flex items-center gap-1.5 px-2 py-1 text-[11px] font-medium text-white/60 hover:text-red-400 bg-black/20 hover:bg-red-500/10 border border-white/5 hover:border-red-500/30 rounded-lg transition-all active:scale-95" title="Clear Board"><Trash2 className="w-3.5 h-3.5" /> Clear</button>
+          <Tooltip text="Reset Zoom">
+            <button onClick={() => setScale(1)} className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium text-white/70 hover:text-white bg-black/20 hover:bg-white/10 border border-white/5 rounded-lg transition-all active:scale-95">{Math.round(scale * 100)}%</button>
+          </Tooltip>
+          <Tooltip text="Clear Board">
+            <button onClick={handleClear} className="flex items-center gap-1.5 px-2 py-1 text-[11px] font-medium text-white/60 hover:text-red-400 bg-black/20 hover:bg-red-500/10 border border-white/5 hover:border-red-500/30 rounded-lg transition-all active:scale-95"><Trash2 className="w-3.5 h-3.5" /> Clear</button>
+          </Tooltip>
         </div>
       </div>
       

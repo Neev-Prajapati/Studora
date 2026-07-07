@@ -8,6 +8,7 @@ import FilePreviewModal from "./FilePreviewModal";
 import QuizModal from "./QuizModal";
 import FlashcardModal from "./FlashcardModal";
 import RoomChatSidebar from "./RoomChatSidebar";
+import { Tooltip } from "./Tooltip";
 import { deleteFileAction, updateMemberRole, removeMember, saveFileRecord } from "@/actions/room";
 import { useRouter } from "next/navigation";
 
@@ -210,23 +211,25 @@ export default function RoomView({
           <div className="hidden sm:flex items-center gap-4 text-right">
             <div>
               <p className="text-sm font-medium text-muted-foreground mb-1 text-left">Invite Code</p>
-              <button 
-                onClick={() => copyCode(inviteCode)}
-                className="font-mono text-lg font-bold tracking-widest bg-muted px-3 py-1 rounded-md text-foreground hover:bg-muted/80 transition-colors flex items-center gap-2"
-                title="Copy Code"
-              >
-                {inviteCode}
-                {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-muted-foreground" />}
-              </button>
+              <Tooltip content="Copy Code">
+                <button 
+                  onClick={() => copyCode(inviteCode)}
+                  className="font-mono text-lg font-bold tracking-widest bg-muted px-3 py-1 rounded-md text-foreground hover:bg-muted/80 transition-colors flex items-center gap-2"
+                >
+                  {inviteCode}
+                  {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-muted-foreground" />}
+                </button>
+              </Tooltip>
             </div>
             {role === 'owner' && (
-              <button 
-                onClick={() => setIsSettingsOpen(true)}
-                className="mt-6 p-2 rounded-md bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
-                title="Room Settings"
-              >
-                <Settings className="w-5 h-5" />
-              </button>
+              <Tooltip content="Room Settings">
+                <button 
+                  onClick={() => setIsSettingsOpen(true)}
+                  className="mt-6 p-2 rounded-md bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
+                >
+                  <Settings className="w-5 h-5" />
+                </button>
+              </Tooltip>
             )}
           </div>
         </div>
@@ -302,57 +305,62 @@ export default function RoomView({
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button 
-                        onClick={() => setPreviewFile({ url: file.url, name: file.name })}
-                        className="p-2 text-muted-foreground hover:text-foreground hover:bg-background rounded-md transition-colors inline-flex" 
-                        title="Preview in App"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      
-                      <button 
-                        onClick={() => handleGenerateQuiz(file.url, file.name, file.id)}
-                        disabled={generatingQuizId === file.id}
-                        className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-colors inline-flex disabled:opacity-50" 
-                        title="Generate AI Quiz"
-                      >
-                        {generatingQuizId === file.id ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <BrainCircuit className="w-4 h-4" />
-                        )}
-                      </button>
-
-                      <button 
-                        onClick={() => handleGenerateFlashcards(file.url, file.name, file.id)}
-                        disabled={generatingFlashcardsId === file.id}
-                        className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-colors inline-flex disabled:opacity-50" 
-                        title="Generate Flashcards"
-                      >
-                        {generatingFlashcardsId === file.id ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Layers className="w-4 h-4" />
-                        )}
-                      </button>
-
-                      <a 
-                        href={file.url} 
-                        download={file.name}
-                        className="p-2 text-muted-foreground hover:text-primary hover:bg-background rounded-md transition-colors inline-flex" 
-                        title="Download"
-                      >
-                        <Download className="w-4 h-4" />
-                      </a>
-                      {(role === 'owner' || (role === 'editor' && file.uploaderId === currentUserId)) && (
+                    <div className="flex items-center gap-2">
+                      <Tooltip content="Preview in App">
                         <button 
-                          onClick={() => handleDeleteFile(file.id)}
-                          className="p-2 text-muted-foreground hover:text-destructive hover:bg-background rounded-md transition-colors" 
-                          title="Delete"
+                          onClick={() => setPreviewFile({ url: file.url, name: file.name })}
+                          className="p-2 text-muted-foreground hover:text-foreground hover:bg-background rounded-md transition-colors inline-flex" 
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Eye className="w-4 h-4" />
                         </button>
+                      </Tooltip>
+                      
+                      <Tooltip content="Generate AI Quiz">
+                        <button 
+                          onClick={() => handleGenerateQuiz(file.url, file.name, file.id)}
+                          disabled={generatingQuizId === file.id}
+                          className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-colors inline-flex disabled:opacity-50" 
+                        >
+                          {generatingQuizId === file.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <BrainCircuit className="w-4 h-4" />
+                          )}
+                        </button>
+                      </Tooltip>
+
+                      <Tooltip content="Generate Flashcards">
+                        <button 
+                          onClick={() => handleGenerateFlashcards(file.url, file.name, file.id)}
+                          disabled={generatingFlashcardsId === file.id}
+                          className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-colors inline-flex disabled:opacity-50" 
+                        >
+                          {generatingFlashcardsId === file.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Layers className="w-4 h-4" />
+                          )}
+                        </button>
+                      </Tooltip>
+
+                      <Tooltip content="Download">
+                        <a 
+                          href={file.url} 
+                          download={file.name}
+                          className="p-2 text-muted-foreground hover:text-primary hover:bg-background rounded-md transition-colors inline-flex" 
+                        >
+                          <Download className="w-4 h-4" />
+                        </a>
+                      </Tooltip>
+                      {(role === 'owner' || (role === 'editor' && file.uploaderId === currentUserId)) && (
+                        <Tooltip content="Delete">
+                          <button 
+                            onClick={() => handleDeleteFile(file.id)}
+                            className="p-2 text-muted-foreground hover:text-destructive hover:bg-background rounded-md transition-colors" 
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </Tooltip>
                       )}
                     </div>
                   </li>
@@ -464,13 +472,14 @@ export default function RoomView({
       />
 
       {/* Floating Action Button for Chat */}
-      <button
-        onClick={() => setIsChatOpen(true)}
-        className="fixed bottom-6 right-6 lg:bottom-10 lg:right-10 z-30 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-xl shadow-primary/30 flex items-center justify-center hover:scale-105 transition-transform"
-        title="Chat with Room AI"
-      >
-        <Sparkles className="w-6 h-6" />
-      </button>
+      <Tooltip content="Chat with Room AI">
+        <button
+          onClick={() => setIsChatOpen(true)}
+          className="fixed bottom-6 right-6 lg:bottom-10 lg:right-10 z-30 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-xl shadow-primary/30 flex items-center justify-center hover:scale-105 transition-transform"
+        >
+          <Sparkles className="w-6 h-6" />
+        </button>
+      </Tooltip>
 
     </div>
   );

@@ -1,6 +1,7 @@
 import { X, ExternalLink, Palette } from "lucide-react";
 import { useEffect, useState } from "react";
 import Whiteboard from "./Whiteboard";
+import { Tooltip } from "./Tooltip";
 
 export default function FilePreviewModal({ 
   isOpen, 
@@ -60,22 +61,24 @@ export default function FilePreviewModal({
             {fileName}
           </h3>
           <div className="flex items-center gap-2">
-            <a 
-              href={fileUrl} 
-              target="_blank" 
-              rel="noreferrer"
-              className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors inline-flex"
-              title="Open in new tab"
-            >
-              <ExternalLink className="w-4 h-4" />
-            </a>
-            <button 
-              onClick={() => setIsWhiteboardOpen(!isWhiteboardOpen)}
-              className={`p-2 rounded-md transition-colors ${isWhiteboardOpen ? "text-primary bg-primary/10 hover:bg-primary/20" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
-              title="Toggle Whiteboard"
-            >
-              <Palette className="w-4 h-4" />
-            </button>
+            <Tooltip content="Open in new tab">
+              <a 
+                href={fileUrl} 
+                target="_blank" 
+                rel="noreferrer"
+                className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors inline-flex"
+              >
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            </Tooltip>
+            <Tooltip content="Toggle Whiteboard">
+              <button 
+                onClick={() => setIsWhiteboardOpen(!isWhiteboardOpen)}
+                className={`p-2 rounded-md transition-colors ${isWhiteboardOpen ? "text-primary bg-primary/10 hover:bg-primary/20" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+              >
+                <Palette className="w-4 h-4" />
+              </button>
+            </Tooltip>
             <button 
               onClick={onClose}
               className="p-2 text-muted-foreground hover:text-destructive hover:bg-muted rounded-md transition-colors"

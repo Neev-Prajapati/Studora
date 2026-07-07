@@ -6,6 +6,7 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import EditUsernameModal from "./EditUsernameModal";
+import { Tooltip } from "./Tooltip";
 
 export default function TopNav() {
   const { data: session } = useSession();
@@ -53,16 +54,17 @@ export default function TopNav() {
                 <p className="text-sm font-medium text-foreground truncate">
                   {currentUsername ? `@${currentUsername}` : "User"}
                 </p>
-                <button 
-                  onClick={() => {
-                    setIsDropdownOpen(false);
-                    setIsEditUsernameOpen(true);
-                  }}
-                  className="p-1 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                  title="Edit Username"
-                >
-                  <Edit2 className="w-3.5 h-3.5" />
-                </button>
+                <Tooltip content="Edit Username">
+                  <button 
+                    onClick={() => {
+                      setIsDropdownOpen(false);
+                      setIsEditUsernameOpen(true);
+                    }}
+                    className="p-1 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                  >
+                    <Edit2 className="w-3.5 h-3.5" />
+                  </button>
+                </Tooltip>
               </div>
               <div className="p-1">
                 <button
