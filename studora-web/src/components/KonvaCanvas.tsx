@@ -207,7 +207,7 @@ export default function KonvaCanvas({ fileUrl }: { fileUrl: string }) {
       return;
     }
     
-    if (textInput.visible && tool !== 'text') {
+    if (textInput.visible) {
       finalizeText();
     }
     
