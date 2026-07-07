@@ -78,6 +78,7 @@ export const file = pgTable("file", {
     roomId: text("room_id").notNull().references(() => room.id, { onDelete: 'cascade' }),
     uploadedBy: text("uploaded_by").notNull().references(() => user.id),
     createdAt: timestamp("created_at").defaultNow().notNull(),
+    podcastScript: text("podcast_script"),
 });
 
 export const activityLog = pgTable("activity_log", {

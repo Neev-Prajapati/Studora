@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Folder, Users, Settings, Upload, FileText, Download, Eye, Trash2, ArrowLeft, MoreVertical, Loader2, Copy, Check, BrainCircuit, Sparkles, Layers } from "lucide-react";
+import { Folder, Users, Settings, Upload, FileText, Download, Eye, Trash2, ArrowLeft, MoreVertical, Loader2, Copy, Check, BrainCircuit, Sparkles, Layers, Play, Pause, Square, Headphones } from "lucide-react";
 import Link from "next/link";
 import RoomSettingsModal from "./RoomSettingsModal";
 import FilePreviewModal from "./FilePreviewModal";
@@ -54,6 +54,12 @@ export default function RoomView({
   const [flashcardsFileName, setFlashcardsFileName] = useState("");
   const [generatingFlashcardsId, setGeneratingFlashcardsId] = useState<string | null>(null);
   const [flashcardsError, setFlashcardsError] = useState("");
+
+  // Podcast state
+  const [playingPodcastId, setPlayingPodcastId] = useState<string | null>(null);
+  const [isPodcastPlaying, setIsPodcastPlaying] = useState(false);
+  const [generatingPodcastId, setGeneratingPodcastId] = useState<string | null>(null);
+  const [podcastScript, setPodcastScript] = useState<string | null>(null);
 
   const copyCode = (code: string) => {
     navigator.clipboard.writeText(code);
@@ -125,6 +131,67 @@ export default function RoomView({
       await removeMember(roomId, targetId);
       setActiveDropdown(null);
     }
+  };
+
+  const handlePlayPodcast = (script: string, fileId: string) => {
+    if (playingPodcastId === fileId && isPodcastPlaying) {
+      window.speechSynthesis.pause();
+      setIsPodcastPlaying(false);
+      return;
+    } else if (playingPodcastId === fileId && !isPodcastPlaying) {
+      window.speechSynthesis.resume();
+      setIsPodcastPlaying(true);
+      return;
+    }
+    
+    // Stop any existing playing podcast
+    window.speechSynthesis.cancel();
+    
+    setPlayingPodcastId(fileId);
+    setPodcastScript(script);
+    setIsPodcastPlaying(true);
+    
+    const utterance = new SpeechSynthesisUtterance(script);
+    
+    const voices = window.speechSynthesis.getVoices();
+    const preferredVoice = voices.find(v => v.name.includes("Google") || v.name.includes("Natural") || v.lang === "en-US") || voices[0];
+    if (preferredVoice) utterance.voice = preferredVoice;
+    
+    utterance.rate = 0.9;
+    
+    utterance.onend = () => {
+      setIsPodcastPlaying(false);
+      setPlayingPodcastId(null);
+    };
+    
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const handleGeneratePodcast = async (fileUrl: string, fileName: string, fileId: string) => {
+    try {
+      setGeneratingPodcastId(fileId);
+      const res = await fetch("/api/ai/podcast", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileUrl, fileName, fileId })
+      });
+      
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to generate podcast");
+      
+      handlePlayPodcast(data.script, fileId);
+    } catch (error) {
+      console.error(error);
+      alert("Error generating podcast");
+    } finally {
+      setGeneratingPodcastId(null);
+    }
+  };
+  
+  const handleStopPodcast = () => {
+    window.speechSynthesis.cancel();
+    setIsPodcastPlaying(false);
+    setPlayingPodcastId(null);
   };
 
   const handleGenerateQuiz = async (fileUrl: string, fileName: string, fileId: string) => {
@@ -373,6 +440,26 @@ export default function RoomView({
                               <span>Generate Flashcards</span>
                             </button>
 
+                            <button 
+                              onClick={() => {
+                                if (file.podcastScript) {
+                                  handlePlayPodcast(file.podcastScript, file.id);
+                                } else {
+                                  handleGeneratePodcast(file.url, file.name, file.id);
+                                }
+                                setActiveFileDropdown(null);
+                              }}
+                              disabled={generatingPodcastId === file.id}
+                              className="flex items-center gap-2 w-full px-3 py-2 text-left text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-sm transition-colors disabled:opacity-50" 
+                            >
+                              {generatingPodcastId === file.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Headphones className="w-4 h-4" />
+                              )}
+                              <span>{file.podcastScript ? 'Play Podcast' : 'Generate Podcast'}</span>
+                            </button>
+
                             <a 
                               href={file.url} 
                               download={file.name}
@@ -506,6 +593,37 @@ export default function RoomView({
         flashcards={activeFlashcards || []} 
         fileName={flashcardsFileName} 
       />
+
+      {/* Sticky Audio Player */}
+      {playingPodcastId && podcastScript && (
+        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 shadow-2xl z-50 flex items-center justify-between animate-in slide-in-from-bottom-full duration-300">
+          <div className="flex items-center gap-4 w-full max-w-7xl mx-auto px-4">
+            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/20 text-primary shrink-0">
+              <Headphones className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="text-sm font-semibold text-foreground truncate">AI Audio Summary</h4>
+              <p className="text-xs text-muted-foreground truncate">
+                {files?.find((f: any) => f.id === playingPodcastId)?.name || "Playing document"}
+              </p>
+            </div>
+            <div className="flex items-center gap-3 shrink-0">
+              <button 
+                onClick={() => handlePlayPodcast(podcastScript, playingPodcastId)}
+                className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-colors"
+              >
+                {isPodcastPlaying ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current ml-0.5" />}
+              </button>
+              <button 
+                onClick={handleStopPodcast}
+                className="w-10 h-10 rounded-full bg-muted text-muted-foreground flex items-center justify-center hover:text-destructive hover:bg-destructive/10 transition-colors"
+              >
+                <Square className="w-4 h-4 fill-current" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Floating Action Button for Chat */}
       <Tooltip content="Chat with Room AI">

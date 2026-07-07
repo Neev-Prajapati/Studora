@@ -29,6 +29,13 @@
       "when": 1783409564911,
       "tag": "0003_majestic_komodo",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1783439924464,
+      "tag": "0004_fuzzy_tomorrow_man",
+      "breakpoints": true
     }
   ]
 }

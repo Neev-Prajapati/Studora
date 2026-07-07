@@ -256,6 +256,7 @@ export async function getRoomDetails(roomId: string) {
         createdAt: file.createdAt,
         uploaderId: file.uploadedBy,
         uploaderName: user.name,
+        podcastScript: file.podcastScript,
       })
       .from(file)
       .innerJoin(user, eq(file.uploadedBy, user.id))
