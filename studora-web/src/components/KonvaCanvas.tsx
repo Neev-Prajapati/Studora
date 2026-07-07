@@ -456,18 +456,18 @@ export default function KonvaCanvas({ fileUrl }: { fileUrl: string }) {
                     return <Ellipse key={el.id} {...commonProps} radiusX={Math.abs(rx)} radiusY={Math.abs(ry)} offsetX={-rx} offsetY={-ry} stroke={el.color} strokeWidth={el.lineWidth} />;
                  }
                  if (el.type === 'pen' || el.type === 'eraser') {
-                    return <Line key={el.id} {...commonProps} points={el.points} stroke={el.color} strokeWidth={el.type === 'eraser' ? el.lineWidth * 3 : el.lineWidth} tension={0.5} lineCap="round" lineJoin="round" globalCompositeOperation={el.type === 'eraser' ? 'destination-out' : 'source-over'} />;
+                    return <Line key={el.id} {...commonProps} points={el.points || []} stroke={el.color} strokeWidth={el.type === 'eraser' ? el.lineWidth * 3 : el.lineWidth} tension={0.5} lineCap="round" lineJoin="round" globalCompositeOperation={el.type === 'eraser' ? 'destination-out' : 'source-over'} />;
                  }
                  if (['line', 'dotted-line'].includes(el.type)) {
-                    return <Line key={el.id} {...commonProps} points={el.points} stroke={el.color} strokeWidth={el.lineWidth} dash={el.type === 'dotted-line' ? [el.lineWidth * 3, el.lineWidth * 3] : undefined} />;
+                    return <Line key={el.id} {...commonProps} points={el.points || []} stroke={el.color} strokeWidth={el.lineWidth} dash={el.type === 'dotted-line' ? [el.lineWidth * 3, el.lineWidth * 3] : undefined} />;
                  }
                  if (['arrow-right', 'arrow-left', 'arrow-both'].includes(el.type)) {
                     // Konva Arrow supports pointer at the end. For both, we might need a custom shape or two arrows. Let's use Line for now for simplicity, or Arrow.
                     // To keep it perfectly matching our old logic, Arrow supports `pointerAtBeginning`.
-                    return <Arrow key={el.id} {...commonProps} points={el.points} stroke={el.color} fill={el.color} strokeWidth={el.lineWidth} pointerLength={el.lineWidth * 4} pointerWidth={el.lineWidth * 4} pointerAtBeginning={el.type === 'arrow-left' || el.type === 'arrow-both'} pointerAtEnding={el.type === 'arrow-right' || el.type === 'arrow-both'} />;
+                    return <Arrow key={el.id} {...commonProps} points={el.points || []} stroke={el.color} fill={el.color} strokeWidth={el.lineWidth} pointerLength={el.lineWidth * 4} pointerWidth={el.lineWidth * 4} pointerAtBeginning={el.type === 'arrow-left' || el.type === 'arrow-both'} pointerAtEnding={el.type === 'arrow-right' || el.type === 'arrow-both'} />;
                  }
                  if (el.type === 'triangle' || el.type === 'diamond') {
-                    return <Line key={el.id} {...commonProps} points={el.points} stroke={el.color} strokeWidth={el.lineWidth} closed />;
+                    return <Line key={el.id} {...commonProps} points={el.points || []} stroke={el.color} strokeWidth={el.lineWidth} closed />;
                  }
                  if (el.type === 'text') {
                     return <Text key={el.id} {...commonProps} text={el.text} fill={el.color} fontSize={el.lineWidth * 6} fontFamily="sans-serif" />;
