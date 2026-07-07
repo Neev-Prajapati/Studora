@@ -142,3 +142,14 @@ export const assignmentActivityLog = pgTable("assignment_activity_log", {
     target: text("target"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+export const whiteboard = pgTable("whiteboard", {
+    userId: text("user_id").notNull().references(() => user.id, { onDelete: 'cascade' }),
+    fileUrl: text("file_url").notNull(),
+    canvasData: text("canvas_data").notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => {
+    return {
+        pk: primaryKey({ columns: [table.userId, table.fileUrl] })
+    };
+});

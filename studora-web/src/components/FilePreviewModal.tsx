@@ -1,5 +1,6 @@
-import { X, ExternalLink } from "lucide-react";
+import { X, ExternalLink, Palette } from "lucide-react";
 import { useEffect, useState } from "react";
+import Whiteboard from "./Whiteboard";
 
 export default function FilePreviewModal({ 
   isOpen, 
@@ -13,6 +14,7 @@ export default function FilePreviewModal({
   fileName: string | null;
 }) {
   const [loading, setLoading] = useState(true);
+  const [isWhiteboardOpen, setIsWhiteboardOpen] = useState(false);
 
   // Close on Escape key
   useEffect(() => {
@@ -68,6 +70,13 @@ export default function FilePreviewModal({
               <ExternalLink className="w-4 h-4" />
             </a>
             <button 
+              onClick={() => setIsWhiteboardOpen(!isWhiteboardOpen)}
+              className={`p-2 rounded-md transition-colors ${isWhiteboardOpen ? "text-primary bg-primary/10 hover:bg-primary/20" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+              title="Toggle Whiteboard"
+            >
+              <Palette className="w-4 h-4" />
+            </button>
+            <button 
               onClick={onClose}
               className="p-2 text-muted-foreground hover:text-destructive hover:bg-muted rounded-md transition-colors"
             >
@@ -76,50 +85,60 @@ export default function FilePreviewModal({
           </div>
         </div>
 
-        {/* Preview Area */}
-        <div className="flex-1 bg-muted/10 relative flex items-center justify-center overflow-hidden">
-          {loading && !isVideo && !isImage && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-            </div>
-          )}
+        {/* Main Content Area */}
+        <div className="flex-1 flex overflow-hidden">
+          {/* File Preview */}
+          <div className={`relative flex items-center justify-center bg-muted/10 transition-all ${isWhiteboardOpen ? 'w-1/2 border-r border-border' : 'w-full'}`}>
+            {loading && !isVideo && !isImage && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            )}
 
-          {isImage ? (
-            <img 
-              src={fileUrl} 
-              alt={fileName || "Preview"} 
-              className="max-w-full max-h-full object-contain"
-              onLoad={() => setLoading(false)}
-            />
-          ) : isVideo ? (
-            <video 
-              src={fileUrl} 
-              controls 
-              className="max-w-full max-h-full"
-              onLoadedData={() => setLoading(false)}
-            />
-          ) : isOfficeDoc ? (
-            <iframe 
-              src={googleDocsViewerUrl}
-              className="w-full h-full border-0"
-              onLoad={() => setLoading(false)}
-            />
-          ) : isPdf ? (
-            <iframe 
-              src={fileUrl}
-              className="w-full h-full border-0"
-              onLoad={() => setLoading(false)}
-            />
-          ) : (
-            <div className="text-center p-8">
-              <p className="text-muted-foreground mb-4">No preview available for this file type.</p>
-              <a 
-                href={fileUrl}
-                download
-                className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md transition-colors"
-              >
-                Download File
-              </a>
+            {isImage ? (
+              <img 
+                src={fileUrl} 
+                alt={fileName || "Preview"} 
+                className="max-w-full max-h-full object-contain"
+                onLoad={() => setLoading(false)}
+              />
+            ) : isVideo ? (
+              <video 
+                src={fileUrl} 
+                controls 
+                className="max-w-full max-h-full"
+                onLoadedData={() => setLoading(false)}
+              />
+            ) : isOfficeDoc ? (
+              <iframe 
+                src={googleDocsViewerUrl}
+                className="w-full h-full border-0"
+                onLoad={() => setLoading(false)}
+              />
+            ) : isPdf ? (
+              <iframe 
+                src={fileUrl}
+                className="w-full h-full border-0"
+                onLoad={() => setLoading(false)}
+              />
+            ) : (
+              <div className="text-center p-8">
+                <p className="text-muted-foreground mb-4">No preview available for this file type.</p>
+                <a 
+                  href={fileUrl}
+                  download
+                  className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md transition-colors"
+                >
+                  Download File
+                </a>
+              </div>
+            )}
+          </div>
+          
+          {/* Whiteboard */}
+          {isWhiteboardOpen && (
+            <div className="w-1/2 p-4 bg-muted/5">
+              <Whiteboard fileUrl={fileUrl} />
             </div>
           )}
         </div>
