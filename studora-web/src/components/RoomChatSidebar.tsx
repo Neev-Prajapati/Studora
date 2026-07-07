@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { X, Send, Bot, User, Loader2, Sparkles } from "lucide-react";
+import { X, Send, Bot, User, Loader2, Sparkles, Mic, Volume2, VolumeX } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 
 interface Message {
@@ -21,7 +21,74 @@ export default function RoomChatSidebar({ isOpen, onClose, roomId }: RoomChatSid
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [autoSpeak, setAutoSpeak] = useState(false);
+  const autoSpeakRef = useRef(autoSpeak);
+  
+  useEffect(() => {
+    autoSpeakRef.current = autoSpeak;
+  }, [autoSpeak]);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<any>(null);
+  
+  // Stop speaking when sidebar closes
+  useEffect(() => {
+    if (!isOpen) {
+      window.speechSynthesis?.cancel();
+      if (recognitionRef.current) {
+        recognitionRef.current.abort();
+      }
+      setIsListening(false);
+    }
+  }, [isOpen]);
+
+  const toggleListening = () => {
+    if (isListening) {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      setIsListening(false);
+    } else {
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert("Speech recognition is not supported in this browser. Please try Chrome or Safari.");
+        return;
+      }
+      
+      const recognition = new SpeechRecognition();
+      recognitionRef.current = recognition;
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+      
+      recognition.onstart = () => {
+        setIsListening(true);
+        setInput("");
+      };
+      
+      recognition.onresult = (event: any) => {
+        const transcript = Array.from(event.results)
+          .map((result: any) => result[0].transcript)
+          .join('');
+        
+        setInput(transcript);
+      };
+      
+      recognition.onerror = (event: any) => {
+        if (event.error !== 'aborted' && event.error !== 'no-speech') {
+          console.error("Speech recognition error", event.error);
+        }
+        setIsListening(false);
+      };
+      
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+      
+      recognition.start();
+    }
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -70,6 +137,23 @@ export default function RoomChatSidebar({ isOpen, onClose, roomId }: RoomChatSid
       }
 
       setMessages([...newMessages, { role: 'model', content: data.reply }]);
+      
+      if (autoSpeakRef.current) {
+        if (window.speechSynthesis.speaking) {
+          window.speechSynthesis.cancel();
+        }
+        
+        setTimeout(() => {
+          // Remove markdown for speech synthesis
+          const cleanText = data.reply.replace(/[#*_~`]/g, '').replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1');
+          const utterance = new SpeechSynthesisUtterance(cleanText);
+          const voices = window.speechSynthesis.getVoices();
+          const preferredVoice = voices.find(v => v.name.includes("Google") || v.name.includes("Natural") || v.lang === "en-US") || voices[0];
+          if (preferredVoice) utterance.voice = preferredVoice;
+          utterance.rate = 1.0;
+          window.speechSynthesis.speak(utterance);
+        }, 50);
+      }
     } catch (err: unknown) {
       console.error(err);
       const errorMessage = err instanceof Error ? err.message : String(err);
@@ -98,12 +182,29 @@ export default function RoomChatSidebar({ isOpen, onClose, roomId }: RoomChatSid
             <Sparkles className="w-5 h-5 text-primary" />
             AI Room Tutor
           </div>
-          <button 
-            onClick={onClose}
-            className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                setAutoSpeak(!autoSpeak);
+                if (autoSpeak) window.speechSynthesis?.cancel(); // stop playing if turned off
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                autoSpeak 
+                  ? 'bg-primary/20 text-primary' 
+                  : 'bg-muted text-muted-foreground hover:text-foreground'
+              }`}
+              title={autoSpeak ? "AI Voice is On" : "AI Voice is Off"}
+            >
+              {autoSpeak ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
+              <span className="hidden sm:inline">Voice {autoSpeak ? 'On' : 'Off'}</span>
+            </button>
+            <button 
+              onClick={onClose}
+              className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Messages */}
@@ -154,17 +255,31 @@ export default function RoomChatSidebar({ isOpen, onClose, roomId }: RoomChatSid
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask about the study materials..."
-              className="flex-1 bg-muted border border-border rounded-full px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 pr-12"
+              placeholder={isListening ? "Listening..." : "Ask about the study materials..."}
+              className="flex-1 bg-muted border border-border rounded-full px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 pr-24"
               disabled={isLoading}
             />
-            <button
-              type="submit"
-              disabled={isLoading || !input.trim()}
-              className="absolute right-1 top-1 bottom-1 w-9 flex items-center justify-center bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-colors disabled:opacity-50"
-            >
-              <Send className="w-4 h-4" />
-            </button>
+            <div className="absolute right-1 top-1 bottom-1 flex items-center gap-1">
+              <button
+                type="button"
+                onClick={toggleListening}
+                className={`w-9 h-9 flex items-center justify-center rounded-full transition-colors ${
+                  isListening 
+                    ? 'bg-red-500 text-white animate-pulse' 
+                    : 'text-muted-foreground hover:bg-background hover:text-foreground'
+                }`}
+                title={isListening ? "Listening..." : "Click to speak"}
+              >
+                <Mic className="w-4 h-4" />
+              </button>
+              <button
+                type="submit"
+                disabled={isLoading || (!input.trim() && !isListening)}
+                className="w-9 h-9 flex items-center justify-center bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-colors disabled:opacity-50"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            </div>
           </form>
           <p className="text-[10px] text-center text-muted-foreground mt-2">
             AI can make mistakes. Verify important information.
